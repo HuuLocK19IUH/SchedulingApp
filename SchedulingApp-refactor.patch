@@ -1,0 +1,1428 @@
+diff --git a/README.md b/README.md
+index 658cf60..abd1990 100644
+--- a/README.md
++++ b/README.md
+@@ -84,9 +84,32 @@ Cấu trúc code:
+ 
+ ```
+ src/
+-  App.jsx          # toàn bộ giao diện + logic (lưới tuần, form, nhập nhanh, xuất/nhập)
+-  main.jsx         # điểm vào React
+-  index.css        # Tailwind + font
+-  data/seed.js     # dữ liệu gốc HK1 + HK2, chuyển học kỳ
+-  lib/time.js      # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay
++  App.jsx                  # chỉ render DashboardPage — không chứa logic
++  main.jsx                 # điểm vào React
++  index.css                # Tailwind + font
++  pages/
++    DashboardPage.jsx      # trang chính: gom state giao diện + lắp ráp các component
++  hooks/
++    useSchedule.js         # trạng thái dữ liệu: localStorage, học kỳ, thêm/sửa/xóa,
++                           # nhập nhanh bằng dán, xuất/nhập file, khôi phục gốc
++  components/
++    Header.jsx             # header: logo SchedulingApp + tên app + chuyển học kỳ + xuất/nhập
++    StatsBar.jsx           # 4 ô thống kê: môn, buổi/tuần, ngày học, tiết/tuần
++    ConflictBanner.jsx     # banner cảnh báo các buổi đang trùng tiết
++    TodayTomorrow.jsx      # 2 thẻ Hôm nay / Ngày mai
++    Toolbar.jsx            # tìm kiếm + lọc theo loại + nút Thêm buổi / Nhập nhanh
++    QuickImportModal.jsx   # khung dán nhanh: mỗi buổi một dòng
++    WeekGrid.jsx           # lưới tuần desktop + xem theo ngày trên điện thoại
++    SessionCard.jsx        # một khối môn trên lưới tuần
++    SessionDetailModal.jsx # modal xem chi tiết một buổi
++    SessionFormModal.jsx   # form thêm / sửa buổi, có cảnh báo trùng tiết
++    Modal.jsx              # khung modal dùng chung
++    Row.jsx                # một dòng "nhãn: giá trị" trong modal chi tiết
++    Field.jsx              # một field có nhãn trong form
++  data/
++    seed.js                # dữ liệu gốc HK1 + HK2, chuyển học kỳ
++  lib/
++    time.js                # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay
++    colors.js              # bảng màu theo môn (PALETTE, colorFor, TYPE_STYLE)
++    download.js            # tải chuỗi text xuống máy dưới dạng file
+ ```
+diff --git a/src/App.jsx b/src/App.jsx
+index c9b3049..09c57bf 100644
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@ -1,563 +1,5 @@
+-import { useEffect, useMemo, useRef, useState } from 'react'
+-import { SEED, SEMESTERS } from './data/seed.js'
+-import {
+-  DAY_NAMES, DAY_SHORT, PERIOD_TIMES, TYPES,
+-  conflictIds, findConflicts, sessionLabel, timeRange, todayIndex,
+-} from './lib/time.js'
+-
+-const STORAGE_KEY = 'xep-lich-hoc-v1'
+-
+-// Một màu cho mỗi môn — tự sinh từ tên môn, ổn định giữa các lần mở.
+-const PALETTE = [
+-  { bg: '#dcfce7', border: '#16a34a', text: '#14532d' },
+-  { bg: '#dbeafe', border: '#2563eb', text: '#1e3a8a' },
+-  { bg: '#fef3c7', border: '#d97706', text: '#78350f' },
+-  { bg: '#fce7f3', border: '#db2777', text: '#831843' },
+-  { bg: '#e0e7ff', border: '#4f46e5', text: '#312e81' },
+-  { bg: '#cffafe', border: '#0891b2', text: '#164e63' },
+-  { bg: '#fee2e2', border: '#dc2626', text: '#7f1d1d' },
+-  { bg: '#ede9fe', border: '#7c3aed', text: '#4c1d95' },
+-]
+-function colorFor(subject) {
+-  let h = 0
+-  for (const ch of subject) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+-  return PALETTE[h % PALETTE.length]
+-}
+-
+-const TYPE_STYLE = {
+-  'Học': 'bg-emerald-100 text-emerald-800',
+-  'Thi': 'bg-red-100 text-red-800',
+-  'Làm việc': 'bg-amber-100 text-amber-800',
+-  'Cá nhân': 'bg-sky-100 text-sky-800',
+-}
+-
+-const EMPTY_FORM = {
+-  subject: '', code: '', className: '', day: 0, start: 7, end: 9,
+-  room: '', teacher: '', note: '', type: 'Học',
+-}
+-
+-function loadData() {
+-  try {
+-    const raw = localStorage.getItem(STORAGE_KEY)
+-    if (!raw) return structuredClone(SEED)
+-    const parsed = JSON.parse(raw)
+-    if (Array.isArray(parsed.hk1) && Array.isArray(parsed.hk2)) return parsed
+-  } catch { /* dữ liệu hỏng -> dùng seed */ }
+-  return structuredClone(SEED)
+-}
+-
+-function download(filename, text, mime = 'text/plain') {
+-  const blob = new Blob([text], { type: `${mime};charset=utf-8` })
+-  const url = URL.createObjectURL(blob)
+-  const a = document.createElement('a')
+-  a.href = url; a.download = filename; a.click()
+-  URL.revokeObjectURL(url)
+-}
+-
+-function parseDay(text) {
+-  const t = text.trim().toLowerCase()
+-  if (t.includes('chủ') || t === 'cn' || t.includes('sunday')) return 6
+-  const n = parseInt(t.replace(/[^0-9]/g, ''), 10)
+-  if (n >= 2 && n <= 7) return n - 2
+-  if (n === 8) return 6
+-  return null
+-}
+-
+-function parsePeriods(text) {
+-  const t = text.trim().replace(/[–—]/g, '-')
+-  const m = t.match(/^(\d{1,2})\s*(?:-\s*(\d{1,2}))?$/)
+-  if (!m) return null
+-  const start = parseInt(m[1], 10)
+-  const end = m[2] ? parseInt(m[2], 10) : start
+-  if (start < 1 || start > 16 || end < 1 || end > 16 || end < start) return null
+-  return [start, end]
+-}
++import { DashboardPage } from './pages/DashboardPage.jsx'
+ 
+ export default function App() {
+-  const [data, setData] = useState(loadData)
+-  const [semester, setSemester] = useState('hk1')
+-  const [search, setSearch] = useState('')
+-  const [filterType, setFilterType] = useState('Tất cả')
+-  const [mobileDay, setMobileDay] = useState(todayIndex())
+-  const [detail, setDetail] = useState(null)
+-  const [form, setForm] = useState(null) // null = đóng; {…EMPTY_FORM, id?} = mở
+-  const [pasteOpen, setPasteOpen] = useState(false)
+-  const [pasteText, setPasteText] = useState('')
+-  const [pasteResult, setPasteResult] = useState('')
+-  const [notice, setNotice] = useState('')
+-  const fileRef = useRef(null)
+-
+-  useEffect(() => {
+-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+-  }, [data])
+-
+-  const sessions = data[semester]
+-  const semInfo = SEMESTERS.find((s) => s.id === semester)
+-  const conflicts = useMemo(() => conflictIds(sessions), [sessions])
+-
+-  const filtered = useMemo(() => {
+-    const q = search.trim().toLowerCase()
+-    return sessions.filter((s) => {
+-      if (filterType !== 'Tất cả' && s.type !== filterType) return false
+-      if (!q) return true
+-      return [s.subject, s.teacher, s.room, s.code, s.className]
+-        .join(' ').toLowerCase().includes(q)
+-    })
+-  }, [sessions, search, filterType])
+-  const filteredIds = useMemo(() => new Set(filtered.map((s) => s.id)), [filtered])
+-
+-  const stats = useMemo(() => ({
+-    subjects: new Set(sessions.map((s) => s.subject)).size,
+-    sessions: sessions.length,
+-    days: new Set(sessions.map((s) => s.day)).size,
+-    periods: sessions.reduce((sum, s) => sum + (s.end - s.start + 1), 0),
+-  }), [sessions])
+-
+-  const today = todayIndex()
+-  const tomorrow = (today + 1) % 7
+-  const daySessions = (d) => sessions.filter((s) => s.day === d).sort((a, b) => a.start - b.start)
+-
+-  function saveData(next) {
+-    setData(next)
+-  }
+-  function updateSemester(list) {
+-    saveData({ ...data, [semester]: list })
+-  }
+-  function upsertSession(values) {
+-    const list = values.id
+-      ? sessions.map((s) => (s.id === values.id ? values : s))
+-      : [...sessions, { ...values, id: `u-${Date.now()}` }]
+-    updateSemester(list)
+-    setForm(null)
+-    setNotice(values.id ? 'Đã lưu thay đổi.' : 'Đã thêm buổi mới.')
+-    setTimeout(() => setNotice(''), 3000)
+-  }
+-  function deleteSession(id) {
+-    updateSemester(sessions.filter((s) => s.id !== id))
+-    setDetail(null)
+-    setNotice('Đã xóa buổi học.')
+-    setTimeout(() => setNotice(''), 3000)
+-  }
+-
+-  const formConflicts = form ? findConflicts(form, sessions) : []
+-
+-  function handlePaste() {
+-    const lines = pasteText.split('\n').map((l) => l.trim()).filter(Boolean)
+-    if (!lines.length) { setPasteResult('Chưa có dòng nào để nhập.'); return }
+-    const added = []
+-    const failed = []
+-    for (const line of lines) {
+-      // Định dạng: Tên môn | Thứ | Tiết bắt đầu-Tiết kết thúc | Phòng | GV
+-      const parts = line.split('|').map((p) => p.trim())
+-      const day = parts[1] ? parseDay(parts[1]) : null
+-      const periods = parts[2] ? parsePeriods(parts[2]) : null
+-      if (!parts[0] || day === null || !periods) {
+-        failed.push(line)
+-        continue
+-      }
+-      added.push({
+-        id: `p-${Date.now()}-${added.length}`,
+-        subject: parts[0], code: '', className: '',
+-        day, start: periods[0], end: periods[1],
+-        room: parts[3] || '', teacher: parts[4] || '', note: '', type: 'Học',
+-      })
+-    }
+-    if (added.length) updateSemester([...sessions, ...added])
+-    setPasteResult(
+-      `Đã thêm ${added.length} buổi.` +
+-      (failed.length ? ` ${failed.length} dòng lỗi, không nhập được: ${failed.join(' ; ')}` : ''),
+-    )
+-    if (added.length) setPasteText('')
+-  }
+-
+-  function exportCSV() {
+-    const head = 'Môn,Mã LHP,Lớp,Thứ,Tiết bắt đầu,Tiết kết thúc,Giờ,Phòng,Giảng viên,Ghi chú,Loại'
+-    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+-    const rows = sessions.map((s) => [
+-      s.subject, s.code, s.className, DAY_NAMES[s.day], s.start, s.end,
+-      timeRange(s.start, s.end), s.room, s.teacher, s.note, s.type,
+-    ].map(esc).join(','))
+-    download(`lich-hoc-${semester}.csv`, '\uFEFF' + [head, ...rows].join('\n'), 'text/csv')
+-  }
+-
+-  function handleImportJSON(file) {
+-    const reader = new FileReader()
+-    reader.onload = () => {
+-      try {
+-        const parsed = JSON.parse(reader.result)
+-        if (!Array.isArray(parsed.hk1) || !Array.isArray(parsed.hk2)) throw new Error('bad')
+-        for (const key of ['hk1', 'hk2']) {
+-          for (const s of parsed[key]) {
+-            if (!s.subject || typeof s.day !== 'number' || !s.start || !s.end) throw new Error('bad')
+-          }
+-        }
+-        saveData(parsed)
+-        setNotice('Đã khôi phục dữ liệu từ file JSON.')
+-      } catch {
+-        setNotice('File JSON không đúng định dạng backup của app.')
+-      }
+-      setTimeout(() => setNotice(''), 4000)
+-    }
+-    reader.readAsText(file)
+-  }
+-
+-  const conflictList = sessions.filter((s) => conflicts.has(s.id))
+-
+-  return (
+-    <div className="min-h-screen">
+-      {/* Header */}
+-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
+-          <div className="flex items-center gap-3">
+-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-xl">📅</div>
+-            <div>
+-              <h1 className="text-lg font-extrabold leading-tight">Xếp Lịch Học</h1>
+-              <p className="text-xs text-slate-500">Nguyễn Hữu Lộc · IUH · Lưu trên máy của bạn (localStorage)</p>
+-            </div>
+-          </div>
+-          <div className="ml-auto flex flex-wrap items-center gap-2">
+-            <div className="flex rounded-lg bg-slate-100 p-1">
+-              {SEMESTERS.map((s) => (
+-                <button
+-                  key={s.id}
+-                  onClick={() => setSemester(s.id)}
+-                  className={`rounded-md px-3 py-1.5 text-sm font-semibold ${semester === s.id ? 'bg-white shadow' : 'text-slate-600'}`}
+-                >
+-                  {s.id === 'hk2' ? 'HK2 · Nháp' : 'HK1'}
+-                </button>
+-              ))}
+-            </div>
+-            <button onClick={exportCSV} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">Xuất CSV</button>
+-            <button onClick={() => download(`lich-hoc-backup.json`, JSON.stringify(data, null, 2), 'application/json')} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">Backup JSON</button>
+-            <button onClick={() => fileRef.current?.click()} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">Nhập JSON</button>
+-            <input ref={fileRef} type="file" accept="application/json" className="hidden"
+-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportJSON(f); e.target.value = '' }} />
+-            <button
+-              onClick={() => { if (confirm('Khôi phục toàn bộ lịch gốc từ ảnh / Excel của Lộc? Các thay đổi của bạn sẽ mất.')) { saveData(structuredClone(SEED)); setNotice('Đã khôi phục lịch gốc.'); setTimeout(() => setNotice(''), 3000) } }}
+-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+-            >Khôi phục gốc</button>
+-          </div>
+-        </div>
+-      </header>
+-
+-      <main className="mx-auto max-w-7xl px-4 py-5">
+-        {notice && (
+-          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800">{notice}</div>
+-        )}
+-
+-        {/* Stats */}
+-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+-          {[
+-            { label: 'Môn học', value: stats.subjects },
+-            { label: 'Buổi / tuần', value: stats.sessions },
+-            { label: 'Ngày học / tuần', value: stats.days },
+-            { label: 'Tiết / tuần', value: stats.periods },
+-          ].map((c) => (
+-            <div key={c.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+-              <div className="text-2xl font-extrabold text-indigo-700">{c.value}</div>
+-              <div className="text-sm text-slate-500">{c.label}</div>
+-            </div>
+-          ))}
+-        </div>
+-        <p className="mt-2 text-sm text-slate-500">{semInfo.name} — {semInfo.note}</p>
+-
+-        {/* Cảnh báo trùng tiết */}
+-        {conflictList.length > 0 && (
+-          <div className="mt-4 rounded-2xl border border-red-300 bg-red-50 p-4">
+-            <p className="font-bold text-red-800">⚠️ Có {conflictList.length} buổi đang trùng tiết — kiểm tra lại với web trường:</p>
+-            <ul className="mt-1 list-disc pl-5 text-sm text-red-700">
+-              {conflictList.map((s) => (
+-                <li key={s.id}>{DAY_NAMES[s.day]}, tiết {s.start}-{s.end}: {s.subject} — {s.room || 'chưa có phòng'}</li>
+-              ))}
+-            </ul>
+-          </div>
+-        )}
+-
+-        {/* Hôm nay / Ngày mai */}
+-        <div className="mt-5 grid gap-3 md:grid-cols-2">
+-          {[{ d: today, label: 'Hôm nay' }, { d: tomorrow, label: 'Ngày mai' }].map(({ d, label }) => (
+-            <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+-              <h2 className="font-bold">{label} — {DAY_NAMES[d]}</h2>
+-              {daySessions(d).length === 0 ? (
+-                <p className="mt-2 text-sm text-slate-500">Không có buổi học. Nghỉ ngơi hoặc xếp lịch làm việc.</p>
+-              ) : (
+-                <ul className="mt-2 space-y-2">
+-                  {daySessions(d).map((s) => {
+-                    const c = colorFor(s.subject)
+-                    return (
+-                      <li key={s.id}>
+-                        <button onClick={() => setDetail(s)} className="flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2 text-left hover:bg-slate-50">
+-                          <span className="h-9 w-1.5 shrink-0 rounded-full" style={{ background: c.border }} />
+-                          <span className="min-w-0 flex-1">
+-                            <span className="block truncate text-sm font-semibold">{s.subject}</span>
+-                            <span className="block text-xs text-slate-500">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end)}{s.room ? ` · ${s.room}` : ''}</span>
+-                          </span>
+-                          {conflicts.has(s.id) && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">Trùng</span>}
+-                        </button>
+-                      </li>
+-                    )
+-                  })}
+-                </ul>
+-              )}
+-            </div>
+-          ))}
+-        </div>
+-
+-        {/* Tìm kiếm / lọc / thêm */}
+-        <div className="mt-5 flex flex-wrap items-center gap-2">
+-          <input
+-            value={search} onChange={(e) => setSearch(e.target.value)}
+-            placeholder="Tìm môn, giảng viên, phòng, mã LHP…"
+-            className="min-w-[220px] flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500"
+-          />
+-          <div className="flex flex-wrap gap-1.5">
+-            {['Tất cả', ...TYPES].map((t) => (
+-              <button key={t} onClick={() => setFilterType(t)}
+-                className={`rounded-full px-3 py-1.5 text-sm font-semibold ${filterType === t ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-300'}`}>
+-                {t}
+-              </button>
+-            ))}
+-          </div>
+-          <button onClick={() => setForm({ ...EMPTY_FORM })} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">+ Thêm buổi</button>
+-          <button onClick={() => setPasteOpen((v) => !v)} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50">
+-            {pasteOpen ? 'Ẩn nhập nhanh' : '⌨️ Nhập nhanh (dán)'}
+-          </button>
+-        </div>
+-
+-        {/* Nhập nhanh */}
+-        {pasteOpen && (
+-          <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+-            <p className="text-sm font-semibold">Dán mỗi buổi một dòng, theo mẫu:</p>
+-            <code className="mt-1 block rounded-lg bg-slate-100 px-3 py-2 text-xs">Tên môn | Thứ | Tiết bắt đầu-Tiết kết thúc | Phòng | GV</code>
+-            <p className="mt-1 text-xs text-slate-500">Ví dụ: Lập trình WWW (Java) | Thứ 2 | 7-9 | V7.01 | Đặng Thị Thu Hà</p>
+-            <textarea
+-              value={pasteText} onChange={(e) => setPasteText(e.target.value)} rows={4}
+-              placeholder="Dán lịch ở đây…"
+-              className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+-            />
+-            <div className="mt-2 flex items-center gap-3">
+-              <button onClick={handlePaste} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">Nhập vào lịch</button>
+-              {pasteResult && <span className="text-sm text-slate-600">{pasteResult}</span>}
+-            </div>
+-          </div>
+-        )}
+-
+-        {/* Lưới tuần — desktop */}
+-        <div className="timetable-scroll mt-5 hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:block">
+-          <div
+-            className="grid min-w-[920px]"
+-            style={{ gridTemplateColumns: '76px repeat(7, minmax(0, 1fr))', gridTemplateRows: '42px repeat(16, 56px)' }}
+-          >
+-            <div className="flex items-center justify-center border-b border-slate-200 text-xs font-bold text-slate-500">Ca / Tiết</div>
+-            {DAY_NAMES.map((d, i) => (
+-              <div key={d} className={`flex items-center justify-center border-b border-slate-200 text-sm font-bold ${i === today ? 'text-indigo-700' : ''}`}>
+-                {d}{i === today ? ' •' : ''}
+-              </div>
+-            ))}
+-            {PERIOD_TIMES.map((t, p) => (
+-              <div key={p} className="flex flex-col items-center justify-center border-b border-slate-100 text-center">
+-                <span className="text-[11px] font-bold text-slate-600">T{p + 1}{p === 0 ? ' · Sáng' : p === 6 ? ' · Chiều' : p === 12 ? ' · Tối' : ''}</span>
+-                <span className="text-[10px] text-slate-400">{t}</span>
+-              </div>
+-            ))}
+-            {DAY_NAMES.map((_, day) =>
+-              PERIOD_TIMES.map((_, p) => (
+-                <div
+-                  key={`${day}-${p}`}
+-                  onClick={() => setForm({ ...EMPTY_FORM, day, start: p + 1, end: p + 1 })}
+-                  title={`${DAY_NAMES[day]} tiết ${p + 1} — bấm để thêm buổi`}
+-                  className="cursor-pointer border-b border-r border-slate-100 hover:bg-indigo-50/50"
+-                  style={{ gridColumn: day + 2, gridRow: p + 2 }}
+-                />
+-              )),
+-            )}
+-            {sessions.filter((s) => filteredIds.has(s.id)).map((s) => {
+-              const c = colorFor(s.subject)
+-              const isConflict = conflicts.has(s.id)
+-              return (
+-                <button
+-                  key={s.id}
+-                  onClick={() => setDetail(s)}
+-                  className="m-[2px] overflow-hidden rounded-lg p-1.5 text-left"
+-                  style={{
+-                    gridColumn: s.day + 2,
+-                    gridRow: `${s.start + 1} / ${s.end + 2}`,
+-                    background: c.bg,
+-                    borderLeft: `4px solid ${c.border}`,
+-                    boxShadow: isConflict ? '0 0 0 2px #dc2626 inset' : undefined,
+-                  }}
+-                >
+-                  <span className="block text-xs font-bold leading-tight" style={{ color: c.text }}>
+-                    {isConflict ? '⚠️ ' : ''}{s.subject}
+-                  </span>
+-                  <span className="mt-0.5 block text-[11px] leading-tight" style={{ color: c.text }}>
+-                    Tiết {s.start}-{s.end}{s.room ? ` · ${s.room}` : ''}
+-                  </span>
+-                  {s.teacher && <span className="block truncate text-[11px]" style={{ color: c.text }}>{s.teacher}</span>}
+-                  {s.type !== 'Học' && <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${TYPE_STYLE[s.type]}`}>{s.type}</span>}
+-                </button>
+-              )
+-            })}
+-          </div>
+-          <p className="mt-2 text-xs text-slate-400">Bấm vào ô trống để thêm buổi mới vào tiết đó · Bấm vào khối môn để xem chi tiết.</p>
+-        </div>
+-
+-        {/* Xem theo ngày — mobile */}
+-        <div className="mt-5 md:hidden">
+-          <div className="flex gap-1.5 overflow-x-auto pb-1">
+-            {DAY_SHORT.map((d, i) => (
+-              <button key={d} onClick={() => setMobileDay(i)}
+-                className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-bold ${mobileDay === i ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-300'}`}>
+-                {d}
+-              </button>
+-            ))}
+-          </div>
+-          <div className="mt-3 space-y-2">
+-            {daySessions(mobileDay).filter((s) => filteredIds.has(s.id)).length === 0 && (
+-              <p className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">Không có buổi nào trong ngày này (theo bộ lọc hiện tại).</p>
+-            )}
+-            {daySessions(mobileDay).filter((s) => filteredIds.has(s.id)).map((s) => {
+-              const c = colorFor(s.subject)
+-              return (
+-                <button key={s.id} onClick={() => setDetail(s)} className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm">
+-                  <span className="h-full min-h-10 w-1.5 rounded-full" style={{ background: c.border }} />
+-                  <span className="min-w-0 flex-1">
+-                    <span className="block text-sm font-bold">{s.subject}</span>
+-                    <span className="block text-xs text-slate-500">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end)}</span>
+-                    <span className="block text-xs text-slate-500">{[s.room, s.teacher].filter(Boolean).join(' · ') || 'Chưa có phòng / GV'}</span>
+-                    {s.note && <span className="block text-xs text-slate-400">{s.note}</span>}
+-                  </span>
+-                  {conflicts.has(s.id) && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">Trùng</span>}
+-                </button>
+-              )
+-            })}
+-          </div>
+-        </div>
+-
+-        <footer className="mt-6 text-center text-xs text-slate-400">
+-          Dữ liệu chỉ lưu trên trình duyệt này (localStorage) — không có tài khoản, không có backend, không gửi dữ liệu đi đâu.
+-          Muốn dùng ở máy khác thì bấm Backup JSON rồi Nhập JSON ở máy đó.
+-        </footer>
+-      </main>
+-
+-      {/* Modal chi tiết */}
+-      {detail && (
+-        <Modal onClose={() => setDetail(null)}>
+-          <div className="flex items-start justify-between gap-3">
+-            <h3 className="text-lg font-extrabold leading-snug">{detail.subject}</h3>
+-            <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${TYPE_STYLE[detail.type]}`}>{detail.type}</span>
+-          </div>
+-          <dl className="mt-4 space-y-2 text-sm">
+-            <Row label="Thứ" value={`${DAY_NAMES[detail.day]} · Tiết ${detail.start}-${detail.end} (${sessionLabel(detail.start)})`} />
+-            <Row label="Giờ" value={timeRange(detail.start, detail.end)} />
+-            <Row label="Mã LHP" value={detail.code || '—'} />
+-            <Row label="Lớp" value={detail.className || '—'} />
+-            <Row label="Phòng" value={detail.room || '—'} />
+-            <Row label="Giảng viên" value={detail.teacher || '—'} />
+-            {detail.note && <Row label="Ghi chú" value={detail.note} />}
+-          </dl>
+-          {conflicts.has(detail.id) && (
+-            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">⚠️ Buổi này đang trùng tiết với một buổi khác cùng ngày — kiểm tra lại với web trường.</p>
+-          )}
+-          <div className="mt-5 flex gap-2">
+-            <button onClick={() => { setForm({ ...detail }); setDetail(null) }} className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Sửa</button>
+-            <button onClick={() => deleteSession(detail.id)} className="rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-600">Xóa</button>
+-            <button onClick={() => setDetail(null)} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Đóng</button>
+-          </div>
+-        </Modal>
+-      )}
+-
+-      {/* Modal thêm / sửa */}
+-      {form && (
+-        <Modal onClose={() => setForm(null)}>
+-          <h3 className="text-lg font-extrabold">{form.id ? 'Sửa buổi' : 'Thêm buổi mới'}</h3>
+-          <form
+-            className="mt-4 space-y-3"
+-            onSubmit={(e) => {
+-              e.preventDefault()
+-              if (!form.subject.trim()) { alert('Nhập tên môn trước đã.'); return }
+-              upsertSession({ ...form, subject: form.subject.trim(), start: Number(form.start), end: Number(form.end), day: Number(form.day) })
+-            }}
+-          >
+-            <Field label="Tên môn *">
+-              <input required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="VD: Lập trình WWW (Java)" className="input" />
+-            </Field>
+-            <div className="grid grid-cols-2 gap-3">
+-              <Field label="Mã LHP"><input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="input" /></Field>
+-              <Field label="Lớp"><input value={form.className} onChange={(e) => setForm({ ...form, className: e.target.value })} placeholder="DHKTPM19BTT" className="input" /></Field>
+-            </div>
+-            <div className="grid grid-cols-3 gap-3">
+-              <Field label="Thứ">
+-                <select value={form.day} onChange={(e) => setForm({ ...form, day: Number(e.target.value) })} className="input">
+-                  {DAY_NAMES.map((d, i) => <option key={d} value={i}>{d}</option>)}
+-                </select>
+-              </Field>
+-              <Field label="Từ tiết">
+-                <select value={form.start} onChange={(e) => setForm({ ...form, start: Number(e.target.value), end: Math.max(Number(e.target.value), form.end) })} className="input">
+-                  {PERIOD_TIMES.map((_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+-                </select>
+-              </Field>
+-              <Field label="Đến tiết">
+-                <select value={form.end} onChange={(e) => setForm({ ...form, end: Number(e.target.value) })} className="input">
+-                  {PERIOD_TIMES.map((_, i) => <option key={i} value={i + 1} disabled={i + 1 < form.start}>{i + 1}</option>)}
+-                </select>
+-              </Field>
+-            </div>
+-            <p className="text-xs text-slate-500">Giờ: {timeRange(Number(form.start), Number(form.end))} · Ca {sessionLabel(Number(form.start))}</p>
+-            {formConflicts.length > 0 && (
+-              <div className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+-                <b>⚠️ Trùng tiết với:</b>
+-                <ul className="list-disc pl-5">
+-                  {formConflicts.map((s) => <li key={s.id}>{s.subject} — tiết {s.start}-{s.end}{s.room ? ` · ${s.room}` : ''}</li>)}
+-                </ul>
+-                Vẫn lưu được nếu Lộc cố tình xếp trùng, nhưng nên kiểm tra lại.
+-              </div>
+-            )}
+-            <div className="grid grid-cols-2 gap-3">
+-              <Field label="Phòng"><input value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="V12.01" className="input" /></Field>
+-              <Field label="Giảng viên"><input value={form.teacher} onChange={(e) => setForm({ ...form, teacher: e.target.value })} className="input" /></Field>
+-            </div>
+-            <Field label="Loại">
+-              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="input">
+-                {TYPES.map((t) => <option key={t}>{t}</option>)}
+-              </select>
+-            </Field>
+-            <Field label="Ghi chú"><input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="VD: Team code: 27adb02" className="input" /></Field>
+-            <div className="flex gap-2 pt-1">
+-              <button type="submit" className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Lưu</button>
+-              <button type="button" onClick={() => setForm(null)} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Hủy</button>
+-            </div>
+-          </form>
+-        </Modal>
+-      )}
+-    </div>
+-  )
+-}
+-
+-function Modal({ children, onClose }) {
+-  return (
+-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
+-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+-        {children}
+-      </div>
+-    </div>
+-  )
+-}
+-
+-function Row({ label, value }) {
+-  return (
+-    <div className="flex gap-3">
+-      <dt className="w-24 shrink-0 font-semibold text-slate-500">{label}</dt>
+-      <dd className="min-w-0 flex-1 font-medium">{value}</dd>
+-    </div>
+-  )
+-}
+-
+-function Field({ label, children }) {
+-  return (
+-    <label className="block">
+-      <span className="mb-1 block text-xs font-bold text-slate-500">{label}</span>
+-      {children}
+-    </label>
+-  )
++  return <DashboardPage />
+ }
+diff --git a/src/components/ConflictBanner.jsx b/src/components/ConflictBanner.jsx
+new file mode 100644
+index 0000000..2896365
+--- /dev/null
++++ b/src/components/ConflictBanner.jsx
+@@ -0,0 +1,15 @@
++import { DAY_NAMES } from '../lib/time.js'
++
++export function ConflictBanner({ conflictList }) {
++  if (conflictList.length === 0) return null
++  return (
++    <div className="mt-4 rounded-2xl border border-red-300 bg-red-50 p-4">
++      <p className="font-bold text-red-800">⚠️ Có {conflictList.length} buổi đang trùng tiết — kiểm tra lại với web trường:</p>
++      <ul className="mt-1 list-disc pl-5 text-sm text-red-700">
++        {conflictList.map((s) => (
++          <li key={s.id}>{DAY_NAMES[s.day]}, tiết {s.start}-{s.end}: {s.subject} — {s.room || 'chưa có phòng'}</li>
++        ))}
++      </ul>
++    </div>
++  )
++}
+diff --git a/src/components/Field.jsx b/src/components/Field.jsx
+new file mode 100644
+index 0000000..1411d62
+--- /dev/null
++++ b/src/components/Field.jsx
+@@ -0,0 +1,8 @@
++export function Field({ label, children }) {
++  return (
++    <label className="block">
++      <span className="mb-1 block text-xs font-bold text-slate-500">{label}</span>
++      {children}
++    </label>
++  )
++}
+diff --git a/src/components/Header.jsx b/src/components/Header.jsx
+new file mode 100644
+index 0000000..d71450b
+--- /dev/null
++++ b/src/components/Header.jsx
+@@ -0,0 +1,42 @@
++import { useRef } from 'react'
++import { SEMESTERS } from '../data/seed.js'
++
++export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup, onImportJSON, onRestoreSeed }) {
++  const fileRef = useRef(null)
++
++  return (
++    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
++      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
++        <div className="flex items-center gap-3">
++          <img src="/logo.png" alt="SchedulingApp" className="h-10 w-10 rounded-xl object-cover" />
++          <div>
++            <h1 className="text-lg font-extrabold leading-tight">SchedulingApp</h1>
++            <p className="text-xs text-slate-500">Xếp Lịch Học · Nguyễn Hữu Lộc · IUH · Lưu trên máy của bạn (localStorage)</p>
++          </div>
++        </div>
++        <div className="ml-auto flex flex-wrap items-center gap-2">
++          <div className="flex rounded-lg bg-slate-100 p-1">
++            {SEMESTERS.map((s) => (
++              <button
++                key={s.id}
++                onClick={() => onSemesterChange(s.id)}
++                className={`rounded-md px-3 py-1.5 text-sm font-semibold ${semester === s.id ? 'bg-white shadow' : 'text-slate-600'}`}
++              >
++                {s.id === 'hk2' ? 'HK2 · Nháp' : 'HK1'}
++              </button>
++            ))}
++          </div>
++          <button onClick={onExportCSV} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">Xuất CSV</button>
++          <button onClick={onExportBackup} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">Backup JSON</button>
++          <button onClick={() => fileRef.current?.click()} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">Nhập JSON</button>
++          <input ref={fileRef} type="file" accept="application/json" className="hidden"
++            onChange={(e) => { const f = e.target.files?.[0]; if (f) onImportJSON(f); e.target.value = '' }} />
++          <button
++            onClick={() => { if (confirm('Khôi phục toàn bộ lịch gốc từ ảnh / Excel của Lộc? Các thay đổi của bạn sẽ mất.')) onRestoreSeed() }}
++            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
++          >Khôi phục gốc</button>
++        </div>
++      </div>
++    </header>
++  )
++}
+diff --git a/src/components/Modal.jsx b/src/components/Modal.jsx
+new file mode 100644
+index 0000000..553fb70
+--- /dev/null
++++ b/src/components/Modal.jsx
+@@ -0,0 +1,9 @@
++export function Modal({ children, onClose }) {
++  return (
++    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
++      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
++        {children}
++      </div>
++    </div>
++  )
++}
+diff --git a/src/components/QuickImportModal.jsx b/src/components/QuickImportModal.jsx
+new file mode 100644
+index 0000000..a1f5054
+--- /dev/null
++++ b/src/components/QuickImportModal.jsx
+@@ -0,0 +1,21 @@
++// Khối nhập nhanh: dán mỗi buổi một dòng, theo mẫu
++// "Tên môn | Thứ | Tiết bắt đầu-Tiết kết thúc | Phòng | GV".
++export function QuickImportModal({ open, pasteText, onPasteTextChange, pasteResult, onImport }) {
++  if (!open) return null
++  return (
++    <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
++      <p className="text-sm font-semibold">Dán mỗi buổi một dòng, theo mẫu:</p>
++      <code className="mt-1 block rounded-lg bg-slate-100 px-3 py-2 text-xs">Tên môn | Thứ | Tiết bắt đầu-Tiết kết thúc | Phòng | GV</code>
++      <p className="mt-1 text-xs text-slate-500">Ví dụ: Lập trình WWW (Java) | Thứ 2 | 7-9 | V7.01 | Đặng Thị Thu Hà</p>
++      <textarea
++        value={pasteText} onChange={(e) => onPasteTextChange(e.target.value)} rows={4}
++        placeholder="Dán lịch ở đây…"
++        className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
++      />
++      <div className="mt-2 flex items-center gap-3">
++        <button onClick={onImport} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">Nhập vào lịch</button>
++        {pasteResult && <span className="text-sm text-slate-600">{pasteResult}</span>}
++      </div>
++    </div>
++  )
++}
+diff --git a/src/components/Row.jsx b/src/components/Row.jsx
+new file mode 100644
+index 0000000..5e4b4f9
+--- /dev/null
++++ b/src/components/Row.jsx
+@@ -0,0 +1,8 @@
++export function Row({ label, value }) {
++  return (
++    <div className="flex gap-3">
++      <dt className="w-24 shrink-0 font-semibold text-slate-500">{label}</dt>
++      <dd className="min-w-0 flex-1 font-medium">{value}</dd>
++    </div>
++  )
++}
+diff --git a/src/components/SessionCard.jsx b/src/components/SessionCard.jsx
+new file mode 100644
+index 0000000..46760d3
+--- /dev/null
++++ b/src/components/SessionCard.jsx
+@@ -0,0 +1,29 @@
++import { colorFor, TYPE_STYLE } from '../lib/colors.js'
++
++// Một khối môn trên lưới tuần (desktop). Đặt bằng gridColumn/gridRow
++// theo thứ và khoảng tiết của buổi.
++export function SessionCard({ session, isConflict, onSelect }) {
++  const c = colorFor(session.subject)
++  return (
++    <button
++      onClick={() => onSelect(session)}
++      className="m-[2px] overflow-hidden rounded-lg p-1.5 text-left"
++      style={{
++        gridColumn: session.day + 2,
++        gridRow: `${session.start + 1} / ${session.end + 2}`,
++        background: c.bg,
++        borderLeft: `4px solid ${c.border}`,
++        boxShadow: isConflict ? '0 0 0 2px #dc2626 inset' : undefined,
++      }}
++    >
++      <span className="block text-xs font-bold leading-tight" style={{ color: c.text }}>
++        {isConflict ? '⚠️ ' : ''}{session.subject}
++      </span>
++      <span className="mt-0.5 block text-[11px] leading-tight" style={{ color: c.text }}>
++        Tiết {session.start}-{session.end}{session.room ? ` · ${session.room}` : ''}
++      </span>
++      {session.teacher && <span className="block truncate text-[11px]" style={{ color: c.text }}>{session.teacher}</span>}
++      {session.type !== 'Học' && <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${TYPE_STYLE[session.type]}`}>{session.type}</span>}
++    </button>
++  )
++}
+diff --git a/src/components/SessionDetailModal.jsx b/src/components/SessionDetailModal.jsx
+new file mode 100644
+index 0000000..8f7a06e
+--- /dev/null
++++ b/src/components/SessionDetailModal.jsx
+@@ -0,0 +1,33 @@
++import { DAY_NAMES, sessionLabel, timeRange } from '../lib/time.js'
++import { TYPE_STYLE } from '../lib/colors.js'
++import { Modal } from './Modal.jsx'
++import { Row } from './Row.jsx'
++
++export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDelete }) {
++  if (!session) return null
++  return (
++    <Modal onClose={onClose}>
++      <div className="flex items-start justify-between gap-3">
++        <h3 className="text-lg font-extrabold leading-snug">{session.subject}</h3>
++        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${TYPE_STYLE[session.type]}`}>{session.type}</span>
++      </div>
++      <dl className="mt-4 space-y-2 text-sm">
++        <Row label="Thứ" value={`${DAY_NAMES[session.day]} · Tiết ${session.start}-${session.end} (${sessionLabel(session.start)})`} />
++        <Row label="Giờ" value={timeRange(session.start, session.end)} />
++        <Row label="Mã LHP" value={session.code || '—'} />
++        <Row label="Lớp" value={session.className || '—'} />
++        <Row label="Phòng" value={session.room || '—'} />
++        <Row label="Giảng viên" value={session.teacher || '—'} />
++        {session.note && <Row label="Ghi chú" value={session.note} />}
++      </dl>
++      {isConflict && (
++        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">⚠️ Buổi này đang trùng tiết với một buổi khác cùng ngày — kiểm tra lại với web trường.</p>
++      )}
++      <div className="mt-5 flex gap-2">
++        <button onClick={onEdit} className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Sửa</button>
++        <button onClick={onDelete} className="rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-600">Xóa</button>
++        <button onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Đóng</button>
++      </div>
++    </Modal>
++  )
++}
+diff --git a/src/components/SessionFormModal.jsx b/src/components/SessionFormModal.jsx
+new file mode 100644
+index 0000000..b9da498
+--- /dev/null
++++ b/src/components/SessionFormModal.jsx
+@@ -0,0 +1,69 @@
++import { DAY_NAMES, PERIOD_TIMES, TYPES, sessionLabel, timeRange } from '../lib/time.js'
++import { Modal } from './Modal.jsx'
++import { Field } from './Field.jsx'
++
++export function SessionFormModal({ form, onFormChange, formConflicts, onClose, onSave }) {
++  if (!form) return null
++  return (
++    <Modal onClose={onClose}>
++      <h3 className="text-lg font-extrabold">{form.id ? 'Sửa buổi' : 'Thêm buổi mới'}</h3>
++      <form
++        className="mt-4 space-y-3"
++        onSubmit={(e) => {
++          e.preventDefault()
++          if (!form.subject.trim()) { alert('Nhập tên môn trước đã.'); return }
++          onSave({ ...form, subject: form.subject.trim(), start: Number(form.start), end: Number(form.end), day: Number(form.day) })
++        }}
++      >
++        <Field label="Tên môn *">
++          <input required value={form.subject} onChange={(e) => onFormChange({ ...form, subject: e.target.value })} placeholder="VD: Lập trình WWW (Java)" className="input" />
++        </Field>
++        <div className="grid grid-cols-2 gap-3">
++          <Field label="Mã LHP"><input value={form.code} onChange={(e) => onFormChange({ ...form, code: e.target.value })} className="input" /></Field>
++          <Field label="Lớp"><input value={form.className} onChange={(e) => onFormChange({ ...form, className: e.target.value })} placeholder="DHKTPM19BTT" className="input" /></Field>
++        </div>
++        <div className="grid grid-cols-3 gap-3">
++          <Field label="Thứ">
++            <select value={form.day} onChange={(e) => onFormChange({ ...form, day: Number(e.target.value) })} className="input">
++              {DAY_NAMES.map((d, i) => <option key={d} value={i}>{d}</option>)}
++            </select>
++          </Field>
++          <Field label="Từ tiết">
++            <select value={form.start} onChange={(e) => onFormChange({ ...form, start: Number(e.target.value), end: Math.max(Number(e.target.value), form.end) })} className="input">
++              {PERIOD_TIMES.map((_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
++            </select>
++          </Field>
++          <Field label="Đến tiết">
++            <select value={form.end} onChange={(e) => onFormChange({ ...form, end: Number(e.target.value) })} className="input">
++              {PERIOD_TIMES.map((_, i) => <option key={i} value={i + 1} disabled={i + 1 < form.start}>{i + 1}</option>)}
++            </select>
++          </Field>
++        </div>
++        <p className="text-xs text-slate-500">Giờ: {timeRange(Number(form.start), Number(form.end))} · Ca {sessionLabel(Number(form.start))}</p>
++        {formConflicts.length > 0 && (
++          <div className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
++            <b>⚠️ Trùng tiết với:</b>
++            <ul className="list-disc pl-5">
++              {formConflicts.map((s) => <li key={s.id}>{s.subject} — tiết {s.start}-{s.end}{s.room ? ` · ${s.room}` : ''}</li>)}
++            </ul>
++            Vẫn lưu được nếu Lộc cố tình xếp trùng, nhưng nên kiểm tra lại.
++          </div>
++        )}
++        <div className="grid grid-cols-2 gap-3">
++          <Field label="Phòng"><input value={form.room} onChange={(e) => onFormChange({ ...form, room: e.target.value })} placeholder="V12.01" className="input" /></Field>
++          <Field label="Giảng viên"><input value={form.teacher} onChange={(e) => onFormChange({ ...form, teacher: e.target.value })} className="input" /></Field>
++        </div>
++        <Field label="Loại">
++          <select value={form.type} onChange={(e) => onFormChange({ ...form, type: e.target.value })} className="input">
++            {TYPES.map((t) => <option key={t}>{t}</option>)}
++          </select>
++        </Field>
++        <Field label="Ghi chú"><input value={form.note} onChange={(e) => onFormChange({ ...form, note: e.target.value })} placeholder="VD: Team code: 27adb02" className="input" /></Field>
++        <div className="flex gap-2 pt-1">
++          <button type="submit" className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Lưu</button>
++          <button type="button" onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Hủy</button>
++        </div>
++      </form>
++    </Modal>
++  )
++}
+diff --git a/src/components/StatsBar.jsx b/src/components/StatsBar.jsx
+new file mode 100644
+index 0000000..8419a21
+--- /dev/null
++++ b/src/components/StatsBar.jsx
+@@ -0,0 +1,20 @@
++export function StatsBar({ stats, semInfo }) {
++  return (
++    <>
++      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
++        {[
++          { label: 'Môn học', value: stats.subjects },
++          { label: 'Buổi / tuần', value: stats.sessions },
++          { label: 'Ngày học / tuần', value: stats.days },
++          { label: 'Tiết / tuần', value: stats.periods },
++        ].map((c) => (
++          <div key={c.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
++            <div className="text-2xl font-extrabold text-indigo-700">{c.value}</div>
++            <div className="text-sm text-slate-500">{c.label}</div>
++          </div>
++        ))}
++      </div>
++      <p className="mt-2 text-sm text-slate-500">{semInfo.name} — {semInfo.note}</p>
++    </>
++  )
++}
+diff --git a/src/components/TodayTomorrow.jsx b/src/components/TodayTomorrow.jsx
+new file mode 100644
+index 0000000..14c50a0
+--- /dev/null
++++ b/src/components/TodayTomorrow.jsx
+@@ -0,0 +1,35 @@
++import { DAY_NAMES, timeRange } from '../lib/time.js'
++import { colorFor } from '../lib/colors.js'
++
++export function TodayTomorrow({ today, tomorrow, daySessions, conflicts, onSelect }) {
++  return (
++    <div className="mt-5 grid gap-3 md:grid-cols-2">
++      {[{ d: today, label: 'Hôm nay' }, { d: tomorrow, label: 'Ngày mai' }].map(({ d, label }) => (
++        <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
++          <h2 className="font-bold">{label} — {DAY_NAMES[d]}</h2>
++          {daySessions(d).length === 0 ? (
++            <p className="mt-2 text-sm text-slate-500">Không có buổi học. Nghỉ ngơi hoặc xếp lịch làm việc.</p>
++          ) : (
++            <ul className="mt-2 space-y-2">
++              {daySessions(d).map((s) => {
++                const c = colorFor(s.subject)
++                return (
++                  <li key={s.id}>
++                    <button onClick={() => onSelect(s)} className="flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2 text-left hover:bg-slate-50">
++                      <span className="h-9 w-1.5 shrink-0 rounded-full" style={{ background: c.border }} />
++                      <span className="min-w-0 flex-1">
++                        <span className="block truncate text-sm font-semibold">{s.subject}</span>
++                        <span className="block text-xs text-slate-500">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end)}{s.room ? ` · ${s.room}` : ''}</span>
++                      </span>
++                      {conflicts.has(s.id) && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">Trùng</span>}
++                    </button>
++                  </li>
++                )
++              })}
++            </ul>
++          )}
++        </div>
++      ))}
++    </div>
++  )
++}
+diff --git a/src/components/Toolbar.jsx b/src/components/Toolbar.jsx
+new file mode 100644
+index 0000000..f208466
+--- /dev/null
++++ b/src/components/Toolbar.jsx
+@@ -0,0 +1,25 @@
++import { TYPES } from '../lib/time.js'
++
++export function Toolbar({ search, onSearchChange, filterType, onFilterChange, onAdd, pasteOpen, onTogglePaste }) {
++  return (
++    <div className="mt-5 flex flex-wrap items-center gap-2">
++      <input
++        value={search} onChange={(e) => onSearchChange(e.target.value)}
++        placeholder="Tìm môn, giảng viên, phòng, mã LHP…"
++        className="min-w-[220px] flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500"
++      />
++      <div className="flex flex-wrap gap-1.5">
++        {['Tất cả', ...TYPES].map((t) => (
++          <button key={t} onClick={() => onFilterChange(t)}
++            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${filterType === t ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-300'}`}>
++            {t}
++          </button>
++        ))}
++      </div>
++      <button onClick={onAdd} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">+ Thêm buổi</button>
++      <button onClick={onTogglePaste} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50">
++        {pasteOpen ? 'Ẩn nhập nhanh' : '⌨️ Nhập nhanh (dán)'}
++      </button>
++    </div>
++  )
++}
+diff --git a/src/components/WeekGrid.jsx b/src/components/WeekGrid.jsx
+new file mode 100644
+index 0000000..ab9b787
+--- /dev/null
++++ b/src/components/WeekGrid.jsx
+@@ -0,0 +1,81 @@
++import { DAY_NAMES, DAY_SHORT, PERIOD_TIMES, timeRange } from '../lib/time.js'
++import { colorFor } from '../lib/colors.js'
++import { SessionCard } from './SessionCard.jsx'
++
++export function WeekGrid({
++  sessions, filteredIds, conflicts, today,
++  mobileDay, onMobileDayChange,
++  daySessions, onSelect, onEmptyCell,
++}) {
++  return (
++    <>
++      {/* Lưới tuần — desktop */}
++      <div className="timetable-scroll mt-5 hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:block">
++        <div
++          className="grid min-w-[920px]"
++          style={{ gridTemplateColumns: '76px repeat(7, minmax(0, 1fr))', gridTemplateRows: '42px repeat(16, 56px)' }}
++        >
++          <div className="flex items-center justify-center border-b border-slate-200 text-xs font-bold text-slate-500">Ca / Tiết</div>
++          {DAY_NAMES.map((d, i) => (
++            <div key={d} className={`flex items-center justify-center border-b border-slate-200 text-sm font-bold ${i === today ? 'text-indigo-700' : ''}`}>
++              {d}{i === today ? ' •' : ''}
++            </div>
++          ))}
++          {PERIOD_TIMES.map((t, p) => (
++            <div key={p} className="flex flex-col items-center justify-center border-b border-slate-100 text-center">
++              <span className="text-[11px] font-bold text-slate-600">T{p + 1}{p === 0 ? ' · Sáng' : p === 6 ? ' · Chiều' : p === 12 ? ' · Tối' : ''}</span>
++              <span className="text-[10px] text-slate-400">{t}</span>
++            </div>
++          ))}
++          {DAY_NAMES.map((_, day) =>
++            PERIOD_TIMES.map((_, p) => (
++              <div
++                key={`${day}-${p}`}
++                onClick={() => onEmptyCell(day, p + 1)}
++                title={`${DAY_NAMES[day]} tiết ${p + 1} — bấm để thêm buổi`}
++                className="cursor-pointer border-b border-r border-slate-100 hover:bg-indigo-50/50"
++                style={{ gridColumn: day + 2, gridRow: p + 2 }}
++              />
++            )),
++          )}
++          {sessions.filter((s) => filteredIds.has(s.id)).map((s) => (
++            <SessionCard key={s.id} session={s} isConflict={conflicts.has(s.id)} onSelect={onSelect} />
++          ))}
++        </div>
++        <p className="mt-2 text-xs text-slate-400">Bấm vào ô trống để thêm buổi mới vào tiết đó · Bấm vào khối môn để xem chi tiết.</p>
++      </div>
++
++      {/* Xem theo ngày — mobile */}
++      <div className="mt-5 md:hidden">
++        <div className="flex gap-1.5 overflow-x-auto pb-1">
++          {DAY_SHORT.map((d, i) => (
++            <button key={d} onClick={() => onMobileDayChange(i)}
++              className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-bold ${mobileDay === i ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-300'}`}>
++              {d}
++            </button>
++          ))}
++        </div>
++        <div className="mt-3 space-y-2">
++          {daySessions(mobileDay).filter((s) => filteredIds.has(s.id)).length === 0 && (
++            <p className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">Không có buổi nào trong ngày này (theo bộ lọc hiện tại).</p>
++          )}
++          {daySessions(mobileDay).filter((s) => filteredIds.has(s.id)).map((s) => {
++            const c = colorFor(s.subject)
++            return (
++              <button key={s.id} onClick={() => onSelect(s)} className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm">
++                <span className="h-full min-h-10 w-1.5 rounded-full" style={{ background: c.border }} />
++                <span className="min-w-0 flex-1">
++                  <span className="block text-sm font-bold">{s.subject}</span>
++                  <span className="block text-xs text-slate-500">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end)}</span>
++                  <span className="block text-xs text-slate-500">{[s.room, s.teacher].filter(Boolean).join(' · ') || 'Chưa có phòng / GV'}</span>
++                  {s.note && <span className="block text-xs text-slate-400">{s.note}</span>}
++                </span>
++                {conflicts.has(s.id) && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">Trùng</span>}
++              </button>
++            )
++          })}
++        </div>
++      </div>
++    </>
++  )
++}
+diff --git a/src/hooks/useSchedule.js b/src/hooks/useSchedule.js
+new file mode 100644
+index 0000000..5a4ad45
+--- /dev/null
++++ b/src/hooks/useSchedule.js
+@@ -0,0 +1,166 @@
++import { useEffect, useMemo, useState } from 'react'
++import { SEED, SEMESTERS } from '../data/seed.js'
++import { conflictIds, timeRange, todayIndex, DAY_NAMES } from '../lib/time.js'
++import { download } from '../lib/download.js'
++
++export const STORAGE_KEY = 'xep-lich-hoc-v1'
++
++export const EMPTY_FORM = {
++  subject: '', code: '', className: '', day: 0, start: 7, end: 9,
++  room: '', teacher: '', note: '', type: 'Học',
++}
++
++function loadData() {
++  try {
++    const raw = localStorage.getItem(STORAGE_KEY)
++    if (!raw) return structuredClone(SEED)
++    const parsed = JSON.parse(raw)
++    if (Array.isArray(parsed.hk1) && Array.isArray(parsed.hk2)) return parsed
++  } catch { /* dữ liệu hỏng -> dùng seed */ }
++  return structuredClone(SEED)
++}
++
++export function parseDay(text) {
++  const t = text.trim().toLowerCase()
++  if (t.includes('chủ') || t === 'cn' || t.includes('sunday')) return 6
++  const n = parseInt(t.replace(/[^0-9]/g, ''), 10)
++  if (n >= 2 && n <= 7) return n - 2
++  if (n === 8) return 6
++  return null
++}
++
++export function parsePeriods(text) {
++  const t = text.trim().replace(/[–—]/g, '-')
++  const m = t.match(/^(\d{1,2})\s*(?:-\s*(\d{1,2}))?$/)
++  if (!m) return null
++  const start = parseInt(m[1], 10)
++  const end = m[2] ? parseInt(m[2], 10) : start
++  if (start < 1 || start > 16 || end < 1 || end > 16 || end < start) return null
++  return [start, end]
++}
++
++/**
++ * Toàn bộ trạng thái dữ liệu của lịch: nạp/lưu localStorage, chuyển học kỳ,
++ * thêm/sửa/xóa buổi, nhập nhanh bằng dán, xuất/nhập file, khôi phục gốc.
++ * Trạng thái giao diện (tìm kiếm, lọc, modal đang mở...) nằm ở DashboardPage.
++ */
++export function useSchedule() {
++  const [data, setData] = useState(loadData)
++  const [semester, setSemester] = useState('hk1')
++  const [notice, setNotice] = useState('')
++
++  useEffect(() => {
++    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
++  }, [data])
++
++  const sessions = data[semester]
++  const semInfo = SEMESTERS.find((s) => s.id === semester)
++  const conflicts = useMemo(() => conflictIds(sessions), [sessions])
++
++  const today = todayIndex()
++  const tomorrow = (today + 1) % 7
++  const daySessions = (d) => sessions.filter((s) => s.day === d).sort((a, b) => a.start - b.start)
++
++  function showNotice(msg, ms = 3000) {
++    setNotice(msg)
++    setTimeout(() => setNotice(''), ms)
++  }
++
++  function saveData(next) {
++    setData(next)
++  }
++
++  function updateSemester(list) {
++    saveData({ ...data, [semester]: list })
++  }
++
++  function upsertSession(values) {
++    const list = values.id
++      ? sessions.map((s) => (s.id === values.id ? values : s))
++      : [...sessions, { ...values, id: `u-${Date.now()}` }]
++    updateSemester(list)
++    showNotice(values.id ? 'Đã lưu thay đổi.' : 'Đã thêm buổi mới.')
++  }
++
++  function deleteSession(id) {
++    updateSemester(sessions.filter((s) => s.id !== id))
++    showNotice('Đã xóa buổi học.')
++  }
++
++  // Nhập nhanh: mỗi dòng "Tên môn | Thứ | Tiết bắt đầu-Tiết kết thúc | Phòng | GV".
++  // Trả về { addedCount, message } để trang hiển thị kết quả.
++  function importFromPaste(pasteText) {
++    const lines = pasteText.split('\n').map((l) => l.trim()).filter(Boolean)
++    if (!lines.length) return { addedCount: 0, message: 'Chưa có dòng nào để nhập.' }
++    const added = []
++    const failed = []
++    for (const line of lines) {
++      const parts = line.split('|').map((p) => p.trim())
++      const day = parts[1] ? parseDay(parts[1]) : null
++      const periods = parts[2] ? parsePeriods(parts[2]) : null
++      if (!parts[0] || day === null || !periods) {
++        failed.push(line)
++        continue
++      }
++      added.push({
++        id: `p-${Date.now()}-${added.length}`,
++        subject: parts[0], code: '', className: '',
++        day, start: periods[0], end: periods[1],
++        room: parts[3] || '', teacher: parts[4] || '', note: '', type: 'Học',
++      })
++    }
++    if (added.length) updateSemester([...sessions, ...added])
++    const message = `Đã thêm ${added.length} buổi.` +
++      (failed.length ? ` ${failed.length} dòng lỗi, không nhập được: ${failed.join(' ; ')}` : '')
++    return { addedCount: added.length, message }
++  }
++
++  function exportCSV() {
++    const head = 'Môn,Mã LHP,Lớp,Thứ,Tiết bắt đầu,Tiết kết thúc,Giờ,Phòng,Giảng viên,Ghi chú,Loại'
++    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
++    const rows = sessions.map((s) => [
++      s.subject, s.code, s.className, DAY_NAMES[s.day], s.start, s.end,
++      timeRange(s.start, s.end), s.room, s.teacher, s.note, s.type,
++    ].map(esc).join(','))
++    download(`lich-hoc-${semester}.csv`, '\uFEFF' + [head, ...rows].join('\n'), 'text/csv')
++  }
++
++  function exportBackup() {
++    download('lich-hoc-backup.json', JSON.stringify(data, null, 2), 'application/json')
++  }
++
++  function importJSON(file) {
++    const reader = new FileReader()
++    reader.onload = () => {
++      try {
++        const parsed = JSON.parse(reader.result)
++        if (!Array.isArray(parsed.hk1) || !Array.isArray(parsed.hk2)) throw new Error('bad')
++        for (const key of ['hk1', 'hk2']) {
++          for (const s of parsed[key]) {
++            if (!s.subject || typeof s.day !== 'number' || !s.start || !s.end) throw new Error('bad')
++          }
++        }
++        saveData(parsed)
++        showNotice('Đã khôi phục dữ liệu từ file JSON.', 4000)
++      } catch {
++        showNotice('File JSON không đúng định dạng backup của app.', 4000)
++      }
++    }
++    reader.readAsText(file)
++  }
++
++  function restoreSeed() {
++    saveData(structuredClone(SEED))
++    showNotice('Đã khôi phục lịch gốc.')
++  }
++
++  return {
++    data,
++    semester, setSemester,
++    sessions, semInfo, conflicts,
++    today, tomorrow, daySessions,
++    notice,
++    upsertSession, deleteSession,
++    importFromPaste, exportCSV, exportBackup, importJSON, restoreSeed,
++  }
++}
+diff --git a/src/lib/colors.js b/src/lib/colors.js
+new file mode 100644
+index 0000000..3f5801c
+--- /dev/null
++++ b/src/lib/colors.js
+@@ -0,0 +1,24 @@
++// Màu cho từng môn — tự sinh từ tên môn, ổn định giữa các lần mở.
++export const PALETTE = [
++  { bg: '#dcfce7', border: '#16a34a', text: '#14532d' },
++  { bg: '#dbeafe', border: '#2563eb', text: '#1e3a8a' },
++  { bg: '#fef3c7', border: '#d97706', text: '#78350f' },
++  { bg: '#fce7f3', border: '#db2777', text: '#831843' },
++  { bg: '#e0e7ff', border: '#4f46e5', text: '#312e81' },
++  { bg: '#cffafe', border: '#0891b2', text: '#164e63' },
++  { bg: '#fee2e2', border: '#dc2626', text: '#7f1d1d' },
++  { bg: '#ede9fe', border: '#7c3aed', text: '#4c1d95' },
++]
++
++export function colorFor(subject) {
++  let h = 0
++  for (const ch of subject) h = (h * 31 + ch.charCodeAt(0)) >>> 0
++  return PALETTE[h % PALETTE.length]
++}
++
++export const TYPE_STYLE = {
++  'Học': 'bg-emerald-100 text-emerald-800',
++  'Thi': 'bg-red-100 text-red-800',
++  'Làm việc': 'bg-amber-100 text-amber-800',
++  'Cá nhân': 'bg-sky-100 text-sky-800',
++}
+diff --git a/src/lib/download.js b/src/lib/download.js
+new file mode 100644
+index 0000000..8f7c2b7
+--- /dev/null
++++ b/src/lib/download.js
+@@ -0,0 +1,8 @@
++// Tải một chuỗi text xuống máy dưới dạng file.
++export function download(filename, text, mime = 'text/plain') {
++  const blob = new Blob([text], { type: `${mime};charset=utf-8` })
++  const url = URL.createObjectURL(blob)
++  const a = document.createElement('a')
++  a.href = url; a.download = filename; a.click()
++  URL.revokeObjectURL(url)
++}
+diff --git a/src/pages/DashboardPage.jsx b/src/pages/DashboardPage.jsx
+new file mode 100644
+index 0000000..dfa78f2
+--- /dev/null
++++ b/src/pages/DashboardPage.jsx
+@@ -0,0 +1,121 @@
++import { useMemo, useState } from 'react'
++import { findConflicts, todayIndex } from '../lib/time.js'
++import { EMPTY_FORM, useSchedule } from '../hooks/useSchedule.js'
++import { Header } from '../components/Header.jsx'
++import { StatsBar } from '../components/StatsBar.jsx'
++import { ConflictBanner } from '../components/ConflictBanner.jsx'
++import { TodayTomorrow } from '../components/TodayTomorrow.jsx'
++import { Toolbar } from '../components/Toolbar.jsx'
++import { QuickImportModal } from '../components/QuickImportModal.jsx'
++import { WeekGrid } from '../components/WeekGrid.jsx'
++import { SessionDetailModal } from '../components/SessionDetailModal.jsx'
++import { SessionFormModal } from '../components/SessionFormModal.jsx'
++
++export function DashboardPage() {
++  const schedule = useSchedule()
++  const {
++    semester, setSemester, sessions, semInfo, conflicts,
++    today, tomorrow, daySessions, notice,
++    upsertSession, deleteSession, importFromPaste,
++    exportCSV, exportBackup, importJSON, restoreSeed,
++  } = schedule
++
++  // Trạng thái giao diện (tìm kiếm, lọc, modal đang mở...) — dữ liệu nằm ở hook.
++  const [search, setSearch] = useState('')
++  const [filterType, setFilterType] = useState('Tất cả')
++  const [mobileDay, setMobileDay] = useState(todayIndex())
++  const [detail, setDetail] = useState(null)
++  const [form, setForm] = useState(null) // null = đóng; {…EMPTY_FORM, id?} = mở
++  const [pasteOpen, setPasteOpen] = useState(false)
++  const [pasteText, setPasteText] = useState('')
++  const [pasteResult, setPasteResult] = useState('')
++
++  const filtered = useMemo(() => {
++    const q = search.trim().toLowerCase()
++    return sessions.filter((s) => {
++      if (filterType !== 'Tất cả' && s.type !== filterType) return false
++      if (!q) return true
++      return [s.subject, s.teacher, s.room, s.code, s.className]
++        .join(' ').toLowerCase().includes(q)
++    })
++  }, [sessions, search, filterType])
++  const filteredIds = useMemo(() => new Set(filtered.map((s) => s.id)), [filtered])
++
++  const stats = useMemo(() => ({
++    subjects: new Set(sessions.map((s) => s.subject)).size,
++    sessions: sessions.length,
++    days: new Set(sessions.map((s) => s.day)).size,
++    periods: sessions.reduce((sum, s) => sum + (s.end - s.start + 1), 0),
++  }), [sessions])
++
++  const conflictList = sessions.filter((s) => conflicts.has(s.id))
++  const formConflicts = form ? findConflicts(form, sessions) : []
++
++  function handlePaste() {
++    const { addedCount, message } = importFromPaste(pasteText)
++    setPasteResult(message)
++    if (addedCount) setPasteText('')
++  }
++
++  return (
++    <div className="min-h-screen">
++      <Header
++        semester={semester}
++        onSemesterChange={setSemester}
++        onExportCSV={exportCSV}
++        onExportBackup={exportBackup}
++        onImportJSON={importJSON}
++        onRestoreSeed={restoreSeed}
++      />
++
++      <main className="mx-auto max-w-7xl px-4 py-5">
++        {notice && (
++          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800">{notice}</div>
++        )}
++
++        <StatsBar stats={stats} semInfo={semInfo} />
++        <ConflictBanner conflictList={conflictList} />
++        <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} />
++
++        <Toolbar
++          search={search} onSearchChange={setSearch}
++          filterType={filterType} onFilterChange={setFilterType}
++          onAdd={() => setForm({ ...EMPTY_FORM })}
++          pasteOpen={pasteOpen} onTogglePaste={() => setPasteOpen((v) => !v)}
++        />
++        <QuickImportModal
++          open={pasteOpen}
++          pasteText={pasteText} onPasteTextChange={setPasteText}
++          pasteResult={pasteResult} onImport={handlePaste}
++        />
++
++        <WeekGrid
++          sessions={sessions} filteredIds={filteredIds} conflicts={conflicts} today={today}
++          mobileDay={mobileDay} onMobileDayChange={setMobileDay}
++          daySessions={daySessions} onSelect={setDetail}
++          onEmptyCell={(day, period) => setForm({ ...EMPTY_FORM, day, start: period, end: period })}
++        />
++
++        <footer className="mt-6 text-center text-xs text-slate-400">
++          Dữ liệu chỉ lưu trên trình duyệt này (localStorage) — không có tài khoản, không có backend, không gửi dữ liệu đi đâu.
++          Muốn dùng ở máy khác thì bấm Backup JSON rồi Nhập JSON ở máy đó.
++        </footer>
++      </main>
++
++      <SessionDetailModal
++        session={detail}
++        isConflict={detail ? conflicts.has(detail.id) : false}
++        onClose={() => setDetail(null)}
++        onEdit={() => { setForm({ ...detail }); setDetail(null) }}
++        onDelete={() => { deleteSession(detail.id); setDetail(null) }}
++      />
++      <SessionFormModal
++        form={form}
++        onFormChange={setForm}
++        formConflicts={formConflicts}
++        onClose={() => setForm(null)}
++        onSave={(values) => { upsertSession(values); setForm(null) }}
++      />
++    </div>
++  )
++}

@@ -84,9 +84,32 @@ Cấu trúc code:
 
 ```
 src/
-  App.jsx          # toàn bộ giao diện + logic (lưới tuần, form, nhập nhanh, xuất/nhập)
-  main.jsx         # điểm vào React
-  index.css        # Tailwind + font
-  data/seed.js     # dữ liệu gốc HK1 + HK2, chuyển học kỳ
-  lib/time.js      # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay
+  App.jsx                  # chỉ render DashboardPage — không chứa logic
+  main.jsx                 # điểm vào React
+  index.css                # Tailwind + font
+  pages/
+    DashboardPage.jsx      # trang chính: gom state giao diện + lắp ráp các component
+  hooks/
+    useSchedule.js         # trạng thái dữ liệu: localStorage, học kỳ, thêm/sửa/xóa,
+                           # nhập nhanh bằng dán, xuất/nhập file, khôi phục gốc
+  components/
+    Header.jsx             # header: logo SchedulingApp + tên app + chuyển học kỳ + xuất/nhập
+    StatsBar.jsx           # 4 ô thống kê: môn, buổi/tuần, ngày học, tiết/tuần
+    ConflictBanner.jsx     # banner cảnh báo các buổi đang trùng tiết
+    TodayTomorrow.jsx      # 2 thẻ Hôm nay / Ngày mai
+    Toolbar.jsx            # tìm kiếm + lọc theo loại + nút Thêm buổi / Nhập nhanh
+    QuickImportModal.jsx   # khung dán nhanh: mỗi buổi một dòng
+    WeekGrid.jsx           # lưới tuần desktop + xem theo ngày trên điện thoại
+    SessionCard.jsx        # một khối môn trên lưới tuần
+    SessionDetailModal.jsx # modal xem chi tiết một buổi
+    SessionFormModal.jsx   # form thêm / sửa buổi, có cảnh báo trùng tiết
+    Modal.jsx              # khung modal dùng chung
+    Row.jsx                # một dòng "nhãn: giá trị" trong modal chi tiết
+    Field.jsx              # một field có nhãn trong form
+  data/
+    seed.js                # dữ liệu gốc HK1 + HK2, chuyển học kỳ
+  lib/
+    time.js                # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay
+    colors.js              # bảng màu theo môn (PALETTE, colorFor, TYPE_STYLE)
+    download.js            # tải chuỗi text xuống máy dưới dạng file
 ```
