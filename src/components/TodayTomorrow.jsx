@@ -8,7 +8,7 @@ export function TodayTomorrow({ today, tomorrow, daySessions, conflicts, onSelec
         <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="font-bold">{label} — {DAY_NAMES[d]}</h2>
           {daySessions(d).length === 0 ? (
-            <p className="mt-2 text-sm text-slate-500">Không có buổi học. Nghỉ ngơi hoặc xếp lịch làm việc.</p>
+            <p className="mt-2 text-sm text-slate-500">Không có buổi học.</p>
           ) : (
             <ul className="mt-2 space-y-2">
               {daySessions(d).map((s) => {

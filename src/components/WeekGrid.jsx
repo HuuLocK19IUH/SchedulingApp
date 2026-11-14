@@ -42,7 +42,6 @@ export function WeekGrid({
             <SessionCard key={s.id} session={s} isConflict={conflicts.has(s.id)} onSelect={onSelect} />
           ))}
         </div>
-        <p className="mt-2 text-xs text-slate-400">Bấm vào ô trống để thêm buổi mới vào tiết đó · Bấm vào khối môn để xem chi tiết.</p>
       </div>
 
       {/* Xem theo ngày — mobile */}
@@ -68,7 +67,6 @@ export function WeekGrid({
                   <span className="block text-sm font-bold">{s.subject}</span>
                   <span className="block text-xs text-slate-500">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end)}</span>
                   <span className="block text-xs text-slate-500">{[s.room, s.teacher].filter(Boolean).join(' · ') || 'Chưa có phòng / GV'}</span>
-                  {s.note && <span className="block text-xs text-slate-400">{s.note}</span>}
                 </span>
                 {conflicts.has(s.id) && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">Trùng</span>}
               </button>

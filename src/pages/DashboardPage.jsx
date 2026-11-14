@@ -14,7 +14,7 @@ import { SessionFormModal } from '../components/SessionFormModal.jsx'
 export function DashboardPage() {
   const schedule = useSchedule()
   const {
-    semester, setSemester, sessions, semInfo, conflicts,
+    semester, setSemester, sessions, conflicts,
     today, tomorrow, daySessions, notice,
     upsertSession, deleteSession, importFromPaste,
     exportCSV, exportBackup, importJSON, restoreSeed,
@@ -73,7 +73,7 @@ export function DashboardPage() {
           <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800">{notice}</div>
         )}
 
-        <StatsBar stats={stats} semInfo={semInfo} />
+        <StatsBar stats={stats} />
         <ConflictBanner conflictList={conflictList} />
         <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} />
 
@@ -97,8 +97,7 @@ export function DashboardPage() {
         />
 
         <footer className="mt-6 text-center text-xs text-slate-400">
-          Dữ liệu chỉ lưu trên trình duyệt này (localStorage) — không có tài khoản, không có backend, không gửi dữ liệu đi đâu.
-          Muốn dùng ở máy khác thì bấm Backup JSON rồi Nhập JSON ở máy đó.
+          Dữ liệu chỉ lưu trên trình duyệt này — Backup JSON trước khi đổi máy.
         </footer>
       </main>
 

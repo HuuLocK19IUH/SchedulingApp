@@ -11,7 +11,7 @@ export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup
           <img src="/logo.png" alt="SchedulingApp" className="h-10 w-10 rounded-xl object-cover" />
           <div>
             <h1 className="text-lg font-extrabold leading-tight">SchedulingApp</h1>
-            <p className="text-xs text-slate-500">Xếp Lịch Học · Nguyễn Hữu Lộc · IUH · Lưu trên máy của bạn (localStorage)</p>
+            <p className="text-xs text-slate-500">Xếp Lịch Học · Nguyễn Hữu Lộc · IUH</p>
           </div>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
