@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { SEMESTERS } from '../data/seed.js'
 
-export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup, onImportJSON, onRestoreSeed, view, onViewChange }) {
+export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup, onImportJSON, onRestoreSeed, view, onViewChange, onExportIcs, reminders, onReminderToggle, onReminderMinutes, onRequestPermission, install }) {
   const fileRef = useRef(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const menuRef = useRef(null)
@@ -98,6 +98,54 @@ export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup
                 >
                   ↩️ Khôi phục gốc <span className="block text-xs font-normal text-red-400">Xóa hết thay đổi, về lại lịch gốc</span>
                 </button>
+                {onExportIcs && (
+                  <button onClick={() => run(onExportIcs)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50">
+                    📅 Xuất .ics (Google Calendar) <span className="block text-xs font-normal text-slate-500">Tải file .ics rồi import vào Google Calendar → Lịch → Cài đặt → Nhập &amp; xuất</span>
+                  </button>
+                )}
+                {reminders && (
+                  <div className="border-t border-slate-100 px-3 py-2">
+                    <p className="text-sm font-bold">🔔 Nhắc lịch</p>
+                    <label className="mt-1 flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={reminders.settings.enabled} onChange={onReminderToggle} className="h-4 w-4 accent-indigo-600" />
+                      Nhắc trước giờ học
+                    </label>
+                    <div className="mt-1 flex items-center gap-2 text-sm text-slate-600">
+                      <span>Trước</span>
+                      <select
+                        value={reminders.settings.minutesBefore}
+                        disabled={!reminders.settings.enabled}
+                        onChange={(e) => onReminderMinutes(Number(e.target.value))}
+                        className="rounded-lg border border-slate-300 px-2 py-1 text-sm"
+                      >
+                        <option value={15}>15 phút</option>
+                        <option value={30}>30 phút</option>
+                      </select>
+                      <span>· thi/deadline nhắc trước 1 ngày</span>
+                    </div>
+                    {reminders.settings.enabled && reminders.permission !== 'granted' && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        {reminders.permission === 'unsupported'
+                          ? 'Trình duyệt này không hỗ trợ thông báo — banner trong app vẫn hiện.'
+                          : 'Thông báo trình duyệt chưa bật — banner trong app vẫn hiện. '}
+                        {reminders.permission === 'default' && (
+                          <button onClick={onRequestPermission} className="font-bold text-indigo-700 underline">Bật thông báo</button>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {install && (
+                  <div className="border-t border-slate-100 px-3 py-2">
+                    {install.canInstall ? (
+                      <button onClick={() => run(install.promptInstall)} className="block w-full rounded-lg bg-indigo-600 px-3 py-2 text-left text-sm font-bold text-white">
+                        📲 Cài đặt app lên điện thoại
+                      </button>
+                    ) : (
+                      <p className="text-xs text-slate-500">📲 Cài đặt app: mở menu trình duyệt → Thêm vào màn hình chính.</p>
+                    )}
+                  </div>
+                )}
                 <p className="border-t border-slate-100 px-3 pt-2 text-xs text-slate-400">
                   Dữ liệu chỉ lưu trên trình duyệt này — Backup JSON trước khi đổi máy.
                 </p>

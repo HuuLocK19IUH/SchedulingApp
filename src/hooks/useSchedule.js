@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { SEED, SEMESTERS } from '../data/seed.js'
 import { conflictIds, timeRange, todayIndex, DAY_NAMES } from '../lib/time.js'
 import { download } from '../lib/download.js'
+import { buildIcs } from '../lib/ics.js'
 
 export const STORAGE_KEY = 'xep-lich-hoc-v1'
 
@@ -125,6 +126,14 @@ export function useSchedule() {
     download(`lich-hoc-${semester}.csv`, '\uFEFF' + [head, ...rows].join('\n'), 'text/csv')
   }
 
+  // Xuất .ics: toàn bộ buổi cả 2 học kỳ + task có ngày hết hạn.
+  // Task được truyền vào từ DashboardPage (hook này không giữ task).
+  function exportIcs(tasks = []) {
+    const allSessions = [...(data.hk1 || []), ...(data.hk2 || [])]
+    download('schedulingapp-lich-hoc.ics', buildIcs(allSessions, tasks), 'text/calendar')
+    showNotice('Đã tải file .ics — import vào Google Calendar để đồng bộ.', 4000)
+  }
+
   function exportBackup() {
     download('lich-hoc-backup.json', JSON.stringify(data, null, 2), 'application/json')
   }
@@ -170,6 +179,6 @@ export function useSchedule() {
     today, tomorrow, daySessions,
     notice,
     upsertSession, deleteSession,
-    importFromPaste, exportCSV, exportBackup, importJSON, restoreSeed, applyPlan,
+    importFromPaste, exportCSV, exportBackup, exportIcs, importJSON, restoreSeed, applyPlan,
   }
 }

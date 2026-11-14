@@ -3,7 +3,7 @@ import { TYPE_STYLE } from '../lib/colors.js'
 import { Modal } from './Modal.jsx'
 import { Row } from './Row.jsx'
 
-export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDelete }) {
+export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDelete, onAddTask }) {
   if (!session) return null
   return (
     <Modal onClose={onClose}>
@@ -23,8 +23,11 @@ export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDel
       {isConflict && (
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">⚠️ Buổi này đang trùng tiết với một buổi khác cùng ngày — kiểm tra lại với web trường.</p>
       )}
-      <div className="mt-5 flex gap-2">
+      <div className="mt-5 flex flex-wrap gap-2">
         <button onClick={onEdit} className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Sửa</button>
+        {onAddTask && (
+          <button onClick={onAddTask} className="flex-1 rounded-xl border border-indigo-300 px-4 py-2 text-sm font-bold text-indigo-700">＋ Thêm task cho môn này</button>
+        )}
         <button onClick={onDelete} className="rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-600">Xóa</button>
         <button onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Đóng</button>
       </div>

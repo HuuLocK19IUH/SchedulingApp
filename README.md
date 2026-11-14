@@ -42,6 +42,9 @@ npm run preview
   cả 4 gom trong menu **⚙️ Cài đặt** ở header (bấm ra ngoài hoặc bấm Esc để đóng).
 - Điện thoại: xem theo ngày, bấm tab T2–CN.
 - Thống kê: số môn, số buổi/tuần, số ngày học, số tiết/tuần.
+- Nhắc trước giờ học 15/30 phút (banner + thông báo), task & deadline
+  gắn vào môn, đếm ngược kỳ thi, xuất .ics sang Google Calendar,
+  cài được như app (PWA) trên điện thoại.
 
 ## Mô phỏng đăng ký
 
@@ -83,6 +86,36 @@ Phương án mẫu có sẵn (lấy đúng từ seed HK2, không bịa thêm): "
    hoặc cột `Tiết` dạng `7-9`. Dòng lỗi nào cũng báo rõ lý do.
 
 Chưa có OCR ảnh chụp lịch — đó là bước sau.
+
+## Dùng hàng ngày
+
+- **Nhắc lịch**: vào menu **⚙️ Cài đặt → 🔔 Nhắc lịch**, bật nhắc và
+  chọn nhắc trước 15 hoặc 30 phút (mặc định 15 phút). App kiểm tra mỗi
+  30 giây khi đang mở: sắp tới giờ học thì hiện banner vàng trên dashboard
+  và (nếu Lộc đã cho phép) gửi thông báo trình duyệt. Task loại Thi /
+  Deadline đến hạn hôm nay hoặc ngày mai cũng được nhắc trước 1 ngày,
+  mỗi task mỗi ngày chỉ nhắc 1 lần. Quyền thông báo chỉ hỏi khi Lộc bật
+  nhắc — từ chối cũng không sao, banner trong app vẫn hiện.
+  Lưu ý: nhắc chỉ chạy khi tab/app đang mở (trình duyệt không cho web
+  chạy nền). Muốn nhắc cả khi đóng app thì cần bản native sau này.
+- **Cài app (PWA)**: bản production có manifest + service worker, mở bằng
+  điện thoại rồi bấm **Cài đặt app** trong menu Cài đặt (hoặc menu trình
+  duyệt → Thêm vào màn hình chính). iPhone: mở bằng Safari → Chia sẻ →
+  Thêm vào MH chính. Widget "Hôm nay học gì" là thẻ Hôm nay ngay đầu
+  dashboard: mỗi buổi kèm "Bắt đầu sau X phút / Đang học / Đã xong".
+  Web không làm được widget ngoài màn hình chính như app native — đó là
+  giới hạn của PWA.
+- **Task & deadline**: thẻ "Task & deadline" dưới widget Hôm nay — thêm
+  task (tên, môn, loại Bài tập / Thi / Deadline / Khác, ngày hết hạn),
+  tick để xong, lọc Tất cả / Chưa xong / Đã xong. Task loại Thi bắt buộc
+  có ngày thi. Kỳ thi gần nhất hiện ngay đầu thẻ với đếm ngược
+  ("còn X ngày" / "Hôm nay" / "Quá hạn X ngày"). Bấm vào một buổi học
+  → "＋ Thêm task cho môn này" để tạo task đã điền sẵn môn.
+- **Xuất .ics (Google Calendar)**: menu Cài đặt → "Xuất .ics" tải file
+  `schedulingapp-lich-hoc.ics` (buổi học lặp hàng tuần 15 tuần + task có
+  ngày hết hạn thành sự kiện cả ngày). Rồi vào Google Calendar → Cài đặt
+  → Nhập & xuất → Import file đó. Đây là đồng bộ một chiều: sửa lịch
+  trong app thì xuất file mới và import lại.
 
 ## Dữ liệu lưu ở đâu?
 
@@ -137,12 +170,18 @@ src/
     useSchedule.js         # trạng thái dữ liệu: localStorage, học kỳ, thêm/sửa/xóa,
                            # nhập nhanh bằng dán, xuất/nhập file, khôi phục gốc, chốt phương án
     usePlans.js            # trạng thái các phương án mô phỏng (localStorage riêng)
+    useTasks.js            # task & deadline (localStorage `schedulingapp-tasks-v1`)
+    useReminders.js        # nhắc giờ học + thi/deadline, banner + Notification
+    useInstallPrompt.js    # bắt sự kiện beforeinstallprompt để hiện nút cài app
   components/
     Header.jsx             # header: logo SchedulingApp + tên app + chuyển view
                            # Lịch học / Mô phỏng + chuyển học kỳ + menu Cài đặt
+                           # (nhắc lịch, xuất .ics, cài app nằm trong menu)
     StatsBar.jsx           # 4 ô thống kê: môn, buổi/tuần, ngày học, tiết/tuần
     ConflictBanner.jsx     # banner cảnh báo các buổi đang trùng tiết
-    TodayTomorrow.jsx      # 2 thẻ Hôm nay / Ngày mai
+    ReminderBanner.jsx     # banner vàng nhắc sắp học / sắp đến hạn
+    TodayTomorrow.jsx      # widget "Hôm nay học gì" + Ngày mai (kèm đếm ngược)
+    TasksPanel.jsx         # danh sách task & deadline + form thêm + đếm ngược thi
     Toolbar.jsx            # tìm kiếm + lọc theo loại + nút Thêm buổi / Nhập nhanh
     QuickImportModal.jsx   # khung dán nhanh: mỗi buổi một dòng
     WeekGrid.jsx           # lưới tuần desktop + xem theo ngày trên điện thoại
@@ -157,9 +196,11 @@ src/
   data/
     seed.js                # dữ liệu gốc HK1 + HK2, chuyển học kỳ
   lib/
-    time.js                # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay
+    time.js                # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay,
+                           # lần học tiếp theo, đếm ngược (hàm thuần)
     colors.js              # bảng màu theo môn (PALETTE, colorFor, TYPE_STYLE)
     download.js            # tải chuỗi text xuống máy dưới dạng file
+    ics.js                 # xuất file .ics cho Google Calendar (hàm thuần)
     planScore.js           # chấm điểm phương án + tìm cặp trùng (hàm thuần)
     importers.js           # parser dán web trường / dán nhanh / CSV-TSV (hàm thuần)
 ```

@@ -60,7 +60,107 @@ export function conflictIds(sessions) {
 }
 
 /** Chỉ số ngày theo quy ước của app: 0 = Thứ 2 ... 6 = Chủ nhật. */
-export function todayIndex() {
-  const jsDay = new Date().getDay() // 0 = CN, 1 = T2, ...
+export function todayIndex(date = new Date()) {
+  const jsDay = date.getDay() // 0 = CN, 1 = T2, ...
   return jsDay === 0 ? 6 : jsDay - 1
 }
+
+// ---- Helpers cho nhắc lịch / đếm ngược / .ics (hàm thuần, test được) ----
+
+/** "6:30" -> số phút từ 0h. */
+export function minutesOf(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number)
+  return h * 60 + m
+}
+
+export function periodStartMinutes(period) {
+  return minutesOf(PERIOD_TIMES[period - 1].split(' - ')[0])
+}
+
+export function periodEndMinutes(period) {
+  return minutesOf(PERIOD_TIMES[period - 1].split(' - ')[1])
+}
+
+/** Chuyển chỉ số ngày của app (0 = Thứ 2) sang JS getDay (0 = CN). */
+export function appDayToJsDay(appDay) {
+  return (appDay + 1) % 7
+}
+
+/**
+ * Lần học tiếp theo của một buổi, tính từ `from` (mặc định là bây giờ).
+ * Nếu hôm nay đúng thứ đó và chưa tới giờ bắt đầu thì trả về hôm nay,
+ * ngược lại là tuần sau cùng thứ đó. Giờ lấy theo giờ địa phương.
+ */
+export function nextOccurrence(session, from = new Date()) {
+  const startMin = periodStartMinutes(session.start)
+  const d = new Date(from)
+  d.setSeconds(0, 0)
+  const targetJs = appDayToJsDay(session.day)
+  let delta = (targetJs - d.getDay() + 7) % 7
+  const todayStart = new Date(d)
+  todayStart.setHours(Math.floor(startMin / 60), startMin % 60, 0, 0)
+  if (delta === 0 && d >= todayStart) delta = 7
+  const next = new Date(d)
+  next.setDate(d.getDate() + delta)
+  next.setHours(Math.floor(startMin / 60), startMin % 60, 0, 0)
+  return next
+}
+
+/** Giờ kết thúc của một buổi vào ngày `date` (cùng ngày với lần học đó). */
+export function sessionEndDate(session, date) {
+  const endMin = periodEndMinutes(session.end)
+  const d = new Date(date)
+  d.setHours(Math.floor(endMin / 60), endMin % 60, 0, 0)
+  return d
+}
+
+/** Trạng thái của một buổi hôm nay: 'upcoming' | 'ongoing' | 'done'. */
+export function sessionStatusToday(session, now = new Date()) {
+  if (session.day !== todayIndex(now)) return 'other-day'
+  const start = periodStartMinutes(session.start)
+  const end = periodEndMinutes(session.end)
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+  if (nowMin < start) return 'upcoming'
+  if (nowMin < end) return 'ongoing'
+  return 'done'
+}
+
+/** "2026-11-14" theo giờ địa phương (không dùng toISOString vì lệch múi giờ). */
+export function formatDateLocal(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+export function parseDateLocal(yyyyMmDd) {
+  const [y, m, d] = yyyyMmDd.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+/** Số ngày từ hôm nay tới ngày `yyyy-MM-dd`: 0 = hôm nay, 1 = ngày mai, âm = quá hạn. */
+export function daysUntil(yyyyMmDd, now = new Date()) {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const target = parseDateLocal(yyyyMmDd)
+  return Math.round((target - today) / 86400000)
+}
+
+/** Nhãn đếm ngược cho task có ngày hết hạn. */
+export function countdownLabel(dueDate, now = new Date()) {
+  if (!dueDate) return ''
+  const diff = daysUntil(dueDate, now)
+  if (diff < 0) return `Quá hạn ${-diff} ngày`
+  if (diff === 0) return 'Hôm nay'
+  if (diff === 1) return 'còn 1 ngày'
+  return `còn ${diff} ngày`
+}
+
+/** "sau 25 phút" / "sau 1 giờ 10 phút" cho một thời điểm trong tương lai. */
+export function inMinutesLabel(date, now = new Date()) {
+  const mins = Math.max(0, Math.round((date - now) / 60000))
+  if (mins < 60) return `sau ${mins} phút`
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return m ? `sau ${h} giờ ${m} phút` : `sau ${h} giờ`
+}
+

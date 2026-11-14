@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react'
 import { findConflicts, todayIndex } from '../lib/time.js'
 import { EMPTY_FORM, useSchedule } from '../hooks/useSchedule.js'
+import { useTasks } from '../hooks/useTasks.js'
+import { useReminders } from '../hooks/useReminders.js'
+import { useInstallPrompt } from '../hooks/useInstallPrompt.js'
 import { Header } from '../components/Header.jsx'
 import { StatsBar } from '../components/StatsBar.jsx'
 import { ConflictBanner } from '../components/ConflictBanner.jsx'
+import { ReminderBanner } from '../components/ReminderBanner.jsx'
 import { TodayTomorrow } from '../components/TodayTomorrow.jsx'
+import { TasksPanel } from '../components/TasksPanel.jsx'
 import { Toolbar } from '../components/Toolbar.jsx'
 import { QuickImportModal } from '../components/QuickImportModal.jsx'
 import { WeekGrid } from '../components/WeekGrid.jsx'
@@ -18,8 +23,16 @@ export function DashboardPage() {
     semester, setSemester, sessions, conflicts,
     today, tomorrow, daySessions, notice,
     upsertSession, deleteSession, importFromPaste,
-    exportCSV, exportBackup, importJSON, restoreSeed,
+    exportCSV, exportBackup, exportIcs, importJSON, restoreSeed,
   } = schedule
+  const tasksApi = useTasks()
+  const reminders = useReminders(sessions, tasksApi.tasks)
+  const install = useInstallPrompt()
+  const [taskPrefill, setTaskPrefill] = useState(null)
+  const subjects = useMemo(
+    () => [...new Set(sessions.map((s) => s.subject))].sort(),
+    [sessions],
+  )
 
   // Trạng thái giao diện (tìm kiếm, lọc, modal đang mở...) — dữ liệu nằm ở hook.
   const [view, setView] = useState('schedule') // 'schedule' | 'simulator'
@@ -66,10 +79,16 @@ export function DashboardPage() {
         onSemesterChange={setSemester}
         onExportCSV={exportCSV}
         onExportBackup={exportBackup}
+        onExportIcs={() => exportIcs(tasksApi.tasks)}
         onImportJSON={importJSON}
         onRestoreSeed={restoreSeed}
         view={view}
         onViewChange={setView}
+        reminders={reminders}
+        onReminderToggle={reminders.toggleEnabled}
+        onReminderMinutes={reminders.setMinutesBefore}
+        onRequestPermission={reminders.requestPermission}
+        install={install}
       />
 
       {view === 'simulator' ? (
@@ -79,10 +98,19 @@ export function DashboardPage() {
         {notice && (
           <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800">{notice}</div>
         )}
+        <ReminderBanner banners={reminders.banners} onDismiss={reminders.dismissBanner} />
 
         <StatsBar stats={stats} />
         <ConflictBanner conflictList={conflictList} />
         <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} />
+        <TasksPanel
+          tasks={tasksApi.tasks}
+          subjects={subjects}
+          onAdd={tasksApi.addTask}
+          onToggleDone={tasksApi.toggleDone}
+          onDelete={tasksApi.deleteTask}
+          prefill={taskPrefill}
+        />
 
         <Toolbar
           search={search} onSearchChange={setSearch}
@@ -115,6 +143,11 @@ export function DashboardPage() {
         onClose={() => setDetail(null)}
         onEdit={() => { setForm({ ...detail }); setDetail(null) }}
         onDelete={() => { deleteSession(detail.id); setDetail(null) }}
+        onAddTask={detail ? () => {
+          setTaskPrefill({ subject: detail.subject, sessionId: detail.id, type: 'Bài tập', nonce: Date.now() })
+          setDetail(null)
+          setView('schedule')
+        } : undefined}
       />
       <SessionFormModal
         form={form}
