@@ -154,6 +154,15 @@ export function useSchedule() {
     showNotice('Đã khôi phục lịch gốc.')
   }
 
+  // Chốt một phương án mô phỏng: thay toàn bộ buổi của học kỳ hiện tại
+  // bằng các buổi trong phương án (cấp id mới để không đụng id cũ).
+  // Chỉ chạy khi Lộc bấm "Chốt phương án" và xác nhận.
+  function applyPlan(list, planName) {
+    const copied = list.map((s, i) => ({ ...s, id: `u-${Date.now()}-${i}` }))
+    updateSemester(copied)
+    showNotice(`Đã chốt "${planName}" làm lịch ${semester === 'hk2' ? 'HK2' : 'HK1'}.`, 4000)
+  }
+
   return {
     data,
     semester, setSemester,
@@ -161,6 +170,6 @@ export function useSchedule() {
     today, tomorrow, daySessions,
     notice,
     upsertSession, deleteSession,
-    importFromPaste, exportCSV, exportBackup, importJSON, restoreSeed,
+    importFromPaste, exportCSV, exportBackup, importJSON, restoreSeed, applyPlan,
   }
 }

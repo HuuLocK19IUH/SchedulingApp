@@ -38,9 +38,51 @@ npm run preview
   `Tên môn | Thứ | Tiết bắt đầu-Tiết kết thúc | Phòng | GV`
 - Xem **Hôm nay / Ngày mai**, lọc theo loại (Học / Thi / Làm việc / Cá nhân),
   tìm theo môn / giảng viên / phòng / mã LHP.
-- Xuất CSV, Backup JSON, Nhập JSON để chuyển máy, nút Khôi phục gốc.
+- Xuất CSV, Backup JSON, Nhập JSON để chuyển máy, nút Khôi phục gốc —
+  cả 4 gom trong menu **⚙️ Cài đặt** ở header (bấm ra ngoài hoặc bấm Esc để đóng).
 - Điện thoại: xem theo ngày, bấm tab T2–CN.
 - Thống kê: số môn, số buổi/tuần, số ngày học, số tiết/tuần.
+
+## Mô phỏng đăng ký
+
+Bấm **Mô phỏng đăng ký** trên header để thử xếp lịch *trước* khi đăng ký
+thật trên web trường. Mỗi phương án là một lịch thử độc lập, lưu riêng
+(localStorage key `schedulingapp-plans-v1`) — lịch chính không bị động
+cho tới khi Lộc bấm **Chốt phương án này**.
+
+- Tạo / đổi tên / nhân bản / xóa phương án; thêm lớp bằng form hoặc nhập hàng loạt.
+- Lưới thử vẽ đúng lịch cả kỳ, báo trùng ngay (cặp trùng liệt kê cụ thể).
+- **Chấm điểm "lịch đẹp"** (hiển thị luôn trong app):
+  `100 − 20 × cặp trùng − 8 × (ngày lên trường vượt quá 3) − 3 × tiết buổi tối (tiết ≥ 13) − 1 × tiết trống giữa các ca trong ngày`,
+  kẹp tối thiểu 0. Ví dụ: lịch 4 ngày, 3 tiết tối, 2 tiết trống, không trùng → 100 − 8 − 9 − 2 = 81.
+- **Bảng so sánh**: mỗi hàng là một tiêu chí (Điểm, Ngày lên trường, Tiết buổi tối,
+  Tổng tiết, Cặp trùng, Giờ trống), mỗi cột là một phương án, ô xanh lá là tốt nhất hàng.
+- **Chốt phương án**: hỏi xác nhận rồi thay toàn bộ buổi của học kỳ hiện tại
+  (HK1/HK2 theo nút chuyển học kỳ) bằng các buổi trong phương án đó.
+
+Phương án mẫu có sẵn (lấy đúng từ seed HK2, không bịa thêm): "HK2 – bản nháp"
+(QLDA, CNMOI, AUTOMAT, KTTKPM) và một phương án trống "Phương án B — trống".
+
+### Nhập lớp vào phương án — 3 cách
+
+1. **Dán từ web trường**: copy nguyên đoạn từ trang Lịch học của
+   sv.iuh.edu.vn, mỗi buổi một khối cách nhau bằng dòng trống. Mỗi khối cần
+   có dòng `Thứ X` và `Tiết: a - b`; thiếu Thứ hoặc Tiết thì app báo lỗi
+   chứ không tự đoán. Ví dụ:
+   ```
+   Đảm bảo chất lượng và Kiểm thử phần mềm
+   DHKTPM19BTT - 422000402302
+   Tiết: 1 - 3
+   Phòng: V12.01
+   GV: Châu Thị Bảo Hà
+   ```
+2. **Dán nhanh**: mỗi buổi một dòng
+   `Tên môn | Thứ | Tiết bắt đầu-Tiết kết thúc | Phòng | GV`.
+3. **Tải file CSV/TSV**: file `.csv` / `.tsv` / `.txt`, hàng đầu là tiêu đề
+   cột (tùy chọn) như `Môn,Thứ,Tiết bắt đầu,Tiết kết thúc,Phòng,GV,Mã`
+   hoặc cột `Tiết` dạng `7-9`. Dòng lỗi nào cũng báo rõ lý do.
+
+Chưa có OCR ảnh chụp lịch — đó là bước sau.
 
 ## Dữ liệu lưu ở đâu?
 
@@ -89,11 +131,15 @@ src/
   index.css                # Tailwind + font
   pages/
     DashboardPage.jsx      # trang chính: gom state giao diện + lắp ráp các component
+    SimulatorPage.jsx      # mô phỏng đăng ký: danh sách phương án, lưới thử,
+                           # điểm phương án, so sánh, chốt phương án
   hooks/
     useSchedule.js         # trạng thái dữ liệu: localStorage, học kỳ, thêm/sửa/xóa,
-                           # nhập nhanh bằng dán, xuất/nhập file, khôi phục gốc
+                           # nhập nhanh bằng dán, xuất/nhập file, khôi phục gốc, chốt phương án
+    usePlans.js            # trạng thái các phương án mô phỏng (localStorage riêng)
   components/
-    Header.jsx             # header: logo SchedulingApp + tên app + chuyển học kỳ + xuất/nhập
+    Header.jsx             # header: logo SchedulingApp + tên app + chuyển view
+                           # Lịch học / Mô phỏng + chuyển học kỳ + menu Cài đặt
     StatsBar.jsx           # 4 ô thống kê: môn, buổi/tuần, ngày học, tiết/tuần
     ConflictBanner.jsx     # banner cảnh báo các buổi đang trùng tiết
     TodayTomorrow.jsx      # 2 thẻ Hôm nay / Ngày mai
@@ -103,6 +149,8 @@ src/
     SessionCard.jsx        # một khối môn trên lưới tuần
     SessionDetailModal.jsx # modal xem chi tiết một buổi
     SessionFormModal.jsx   # form thêm / sửa buổi, có cảnh báo trùng tiết
+    PlanCompare.jsx        # bảng so sánh các phương án mô phỏng
+    PlanImport.jsx         # panel nhập lớp vào phương án (web trường / dán nhanh / file)
     Modal.jsx              # khung modal dùng chung
     Row.jsx                # một dòng "nhãn: giá trị" trong modal chi tiết
     Field.jsx              # một field có nhãn trong form
@@ -112,4 +160,6 @@ src/
     time.js                # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay
     colors.js              # bảng màu theo môn (PALETTE, colorFor, TYPE_STYLE)
     download.js            # tải chuỗi text xuống máy dưới dạng file
+    planScore.js           # chấm điểm phương án + tìm cặp trùng (hàm thuần)
+    importers.js           # parser dán web trường / dán nhanh / CSV-TSV (hàm thuần)
 ```

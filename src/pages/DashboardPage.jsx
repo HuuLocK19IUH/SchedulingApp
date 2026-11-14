@@ -10,6 +10,7 @@ import { QuickImportModal } from '../components/QuickImportModal.jsx'
 import { WeekGrid } from '../components/WeekGrid.jsx'
 import { SessionDetailModal } from '../components/SessionDetailModal.jsx'
 import { SessionFormModal } from '../components/SessionFormModal.jsx'
+import { SimulatorPage } from './SimulatorPage.jsx'
 
 export function DashboardPage() {
   const schedule = useSchedule()
@@ -21,6 +22,7 @@ export function DashboardPage() {
   } = schedule
 
   // Trạng thái giao diện (tìm kiếm, lọc, modal đang mở...) — dữ liệu nằm ở hook.
+  const [view, setView] = useState('schedule') // 'schedule' | 'simulator'
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('Tất cả')
   const [mobileDay, setMobileDay] = useState(todayIndex())
@@ -66,8 +68,13 @@ export function DashboardPage() {
         onExportBackup={exportBackup}
         onImportJSON={importJSON}
         onRestoreSeed={restoreSeed}
+        view={view}
+        onViewChange={setView}
       />
 
+      {view === 'simulator' ? (
+        <SimulatorPage schedule={schedule} />
+      ) : (
       <main className="mx-auto max-w-7xl px-4 py-5">
         {notice && (
           <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800">{notice}</div>
@@ -100,6 +107,7 @@ export function DashboardPage() {
           Dữ liệu chỉ lưu trên trình duyệt này — Backup JSON trước khi đổi máy.
         </footer>
       </main>
+      )}
 
       <SessionDetailModal
         session={detail}
