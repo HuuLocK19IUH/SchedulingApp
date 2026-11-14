@@ -3,7 +3,7 @@ import { TYPE_STYLE } from '../lib/colors.js'
 import { Modal } from './Modal.jsx'
 import { Row } from './Row.jsx'
 
-export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDelete, onAddTask }) {
+export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDelete, onAddTask, times }) {
   if (!session) return null
   return (
     <Modal onClose={onClose}>
@@ -13,7 +13,10 @@ export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDel
       </div>
       <dl className="mt-4 space-y-2 text-sm">
         <Row label="Thứ" value={`${DAY_NAMES[session.day]} · Tiết ${session.start}-${session.end} (${sessionLabel(session.start)})`} />
-        <Row label="Giờ" value={timeRange(session.start, session.end)} />
+        <Row label="Giờ" value={timeRange(session.start, session.end, times)} />
+        {session.type === 'Thi' && session.examDate && (
+          <Row label="Ngày thi" value={new Date(`${session.examDate}T00:00:00`).toLocaleDateString('vi-VN')} />
+        )}
         <Row label="Mã LHP" value={session.code || '—'} />
         <Row label="Lớp" value={session.className || '—'} />
         <Row label="Phòng" value={session.room || '—'} />

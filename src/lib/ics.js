@@ -57,12 +57,13 @@ function uid(prefix, i) {
 export function buildIcs(sessions = [], tasks = [], opts = {}) {
   const weeks = opts.semesterWeeks || 15
   const from = opts.from || new Date()
+  const times = opts.times // mảng 16 khung giờ của preset đang dùng (mặc định IUH)
   const events = []
 
   sessions.forEach((s, i) => {
     if (typeof s.day !== 'number' || !s.start || !s.end) return
-    const start = nextOccurrence(s, from)
-    const endMin = periodEndMinutes(s.end)
+    const start = nextOccurrence(s, from, times)
+    const endMin = periodEndMinutes(s.end, times)
     const end = new Date(start)
     end.setHours(Math.floor(endMin / 60), endMin % 60, 0, 0)
     const desc = [s.code, s.className, s.teacher, s.note].filter(Boolean).join(' · ')

@@ -5,8 +5,9 @@ import { SessionCard } from './SessionCard.jsx'
 export function WeekGrid({
   sessions, filteredIds, conflicts, today,
   mobileDay, onMobileDayChange,
-  daySessions, onSelect, onEmptyCell,
+  daySessions, onSelect, onEmptyCell, times = PERIOD_TIMES,
 }) {
+  const PERIOD_TIMES = times
   return (
     <>
       {/* Lưới tuần — desktop */}
@@ -65,7 +66,7 @@ export function WeekGrid({
                 <span className="h-full min-h-10 w-1.5 rounded-full" style={{ background: c.border }} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-bold">{s.subject}</span>
-                  <span className="block text-xs text-slate-500">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end)}</span>
+                  <span className="block text-xs text-slate-500">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end, times)}</span>
                   <span className="block text-xs text-slate-500">{[s.room, s.teacher].filter(Boolean).join(' · ') || 'Chưa có phòng / GV'}</span>
                 </span>
                 {conflicts.has(s.id) && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">Trùng</span>}

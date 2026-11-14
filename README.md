@@ -5,6 +5,16 @@ Không backend, không tài khoản, không database. Dữ liệu chỉ lưu tr�
 
 Sinh viên: Nguyễn Hữu Lộc — IUH.
 
+## Demo
+
+Demo: <dán link Vercel của bạn vào đây sau khi deploy>
+
+## Screenshots
+
+Chưa có ảnh chụp thật trong repo — xem hướng dẫn chụp ở
+[`docs/screenshots/README.md`](docs/screenshots/README.md) rồi bỏ ảnh
+`dashboard.png` và `simulator.png` vào thư mục `docs/screenshots/`.
+
 ## Chạy thử
 
 ```bash
@@ -45,6 +55,12 @@ npm run preview
 - Nhắc trước giờ học 15/30 phút (banner + thông báo), task & deadline
   gắn vào môn, đếm ngược kỳ thi, xuất .ics sang Google Calendar,
   cài được như app (PWA) trên điện thoại.
+- Khung giờ tiết chọn theo trường (mặc định IUH) hoặc tự chỉnh từng tiết
+  trong menu Cài đặt → "Khung giờ tiết".
+- Tab **Lịch thi** riêng (màu đỏ): buổi thi + task thi, có ngày thi thì
+  đếm ngược.
+- Xuất ảnh PNG lưới tuần để share nhóm, và **Tìm giờ trống chung** để
+  tìm khung giờ cả nhóm cùng rảnh.
 
 ## Mô phỏng đăng ký
 
@@ -117,6 +133,80 @@ Chưa có OCR ảnh chụp lịch — đó là bước sau.
   → Nhập & xuất → Import file đó. Đây là đồng bộ một chiều: sửa lịch
   trong app thì xuất file mới và import lại.
 
+## Khung giờ tiết, Lịch thi, Ảnh PNG, Giờ trống chung
+
+- **Khung giờ tiết**: menu Cài đặt → "Khung giờ tiết". Mặc định là
+  IUH (tiết 1 bắt đầu 6:30, tiết 16 kết thúc 21:30) — dữ liệu cũ của Lộc
+  không đổi gì. Có thêm preset "Chuẩn 50 phút (mẫu ví dụ)" — chỉ là mẫu
+  ví dụ (tiết 50 phút, nghỉ 10 phút, nghỉ trưa sau tiết 6), không phải
+  giờ thật của trường nào. Chọn "Tùy chỉnh…" để tự chỉnh từng tiết
+  (giờ bắt đầu/kết thúc dạng HH:MM); app chỉ lưu khi đủ 16 tiết, mỗi
+  tiết kết thúc sau khi bắt đầu và các tiết xếp theo thứ tự tăng dần,
+  sai thì báo lỗi rõ ràng. Đổi khung giờ là đổi giờ khắp app: lưới tuần,
+  widget Hôm nay, nhắc lịch, xuất .ics, mô phỏng.
+- **Lịch thi**: bấm tab **Lịch thi** trên header (màu đỏ). Liệt kê các
+  buổi loại "Thi" và task loại "Thi": có ngày thi thì hiện ngày + đếm
+  ngược ("còn X ngày" / "Hôm nay" / "Quá hạn"), chưa có ngày thì xếp
+  sau theo thứ. Nhập ngày thi trong form thêm/sửa buổi khi chọn loại
+  "Thi" (không bắt buộc, không tự bịa ngày). Buổi thi vẫn hiện trên
+  lưới tuần bình thường.
+- **Xuất ảnh PNG**: menu Cài đặt → "Xuất ảnh PNG" tải file
+  `schedulingapp-lich-hoc.png` — lưới tuần vẽ bằng Canvas, tiêu đề +
+  giờ theo preset đang dùng, khối môn tô màu như trên web.
+- **Tìm giờ trống chung**: cuối trang Lịch học, mục "Tìm giờ trống
+  chung". Thêm bạn bằng tên + dán lịch bận của bạn (cùng định dạng dán
+  nhanh). App liệt kê 5 khung trống dài nhất (≥ 2 tiết) và bảng giờ
+  trống theo ngày. Bạn bè lưu ở localStorage máy này
+  (`schedulingapp-friends-v1`). Chia sẻ bằng cách bạn xuất lịch
+  (CSV/JSON/.ics) rồi Lộc nhập vào — chưa có lịch chung trực tuyến vì
+  app không có backend.
+
+## Kiểm thử & CI
+
+```bash
+npm test        # Vitest — 24 test cho logic thuần (giờ tiết, trùng tiết,
+                # chấm điểm phương án, import dán nhanh/CSV, xuất .ics, giờ trống)
+npm run build
+```
+
+Mỗi lần push / mở PR lên `main`, GitHub Actions (`.github/workflows/ci.yml`)
+chạy `npm ci` → `npm test` → `npm run build` (Node 20). Deploy Vercel tự
+động: import repo vào Vercel, Framework Preset **Vite**, Deploy — mỗi lần
+push lên `main` là Vercel deploy lại, không cần token hay secret gì thêm.
+
+## Roadmap
+
+- [x] Phần 0 — Dọn dashboard (10/11/2026): bỏ ghi chú dư thừa, gom
+  Xuất/Backup/Nhập/Khôi phục vào menu Cài đặt.
+- [x] Phần 1 — Mô phỏng đăng ký (14/11/2026): thử xếp lịch trước khi
+  đăng ký, so sánh phương án A/B/C, chấm điểm lịch đẹp, import dán/CSV.
+- [x] Phần 2 — Dùng hàng ngày (14/11/2026): nhắc lịch, PWA + widget
+  Hôm nay, task/deadline, xuất .ics.
+- [x] Phần 3 — Cho người khác dùng (14/11/2026): preset khung giờ tiết,
+  tab Lịch thi, xuất ảnh PNG, tìm giờ trống chung.
+- [x] Phần 4 — Project thật (14/11/2026): Vitest, GitHub Actions CI,
+  deploy Vercel tự động, README có Demo/Screenshots/Roadmap.
+- [ ] Tiếp theo: OCR ảnh chụp lịch, preset giờ thật của các trường khác
+  (ghi rõ nguồn), đồng bộ đám mây khi cần (xem bên dưới).
+
+## Có cần backend không?
+
+**Không — với tất cả tính năng tới Phần 4, app vẫn chỉ cần frontend.**
+Mọi dữ liệu nằm ở localStorage trên máy Lộc. Chỉ khi nào Lộc muốn lịch
+chung trực tuyến thật sự (nhiều người cùng xem/sửa một lịch, đăng nhập
+tài khoản) mới cần backend. Khi đó hướng gọn nhất là Supabase, chỉ cần
+5 bước, chưa cần làm ngay:
+
+1. Tạo project miễn phí ở supabase.com, tạo bảng `schedules`
+   (cột: `id`, `user_id`, `data` jsonb, `updated_at`).
+2. Bật Row Level Security, cho phép mỗi user chỉ đọc/ghi dòng của mình.
+3. Lấy Project URL + anon key, thêm vào Vercel → Environment Variables
+   (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
+4. Thêm đăng nhập Google bằng Supabase Auth (1 nút, không tự viết auth).
+5. Đổi chỗ đọc/ghi localStorage hiện tại sang đọc/ghi bảng `schedules`
+   (giữ localStorage làm cache offline) — logic lịch, điểm, import
+   trong `src/lib/` giữ nguyên, không viết lại.
+
 ## Dữ liệu lưu ở đâu?
 
 Chỉ trong `localStorage` của trình duyệt, key `xep-lich-hoc-v1`.
@@ -140,7 +230,9 @@ vào `SEED` với cùng id đó, ví dụ `hk3: [ ... ]`. Quy ước:
 - `start` / `end`: tiết bắt đầu / kết thúc (1–16)
 - `type`: `'Học' | 'Thi' | 'Làm việc' | 'Cá nhân'`
 
-Giờ từng tiết nằm ở `src/lib/time.js` (`PERIOD_TIMES`).
+Giờ từng tiết mặc định nằm ở `src/lib/time.js` (`PERIOD_TIMES`, preset
+IUH); đổi khung giờ trong app thì vào menu Cài đặt → "Khung giờ tiết"
+(xem mục trên), không cần sửa code.
 
 ## ⚠️ Lịch trùng cần kiểm tra lại với web trường
 
@@ -173,10 +265,14 @@ src/
     useTasks.js            # task & deadline (localStorage `schedulingapp-tasks-v1`)
     useReminders.js        # nhắc giờ học + thi/deadline, banner + Notification
     useInstallPrompt.js    # bắt sự kiện beforeinstallprompt để hiện nút cài app
+    usePreset.js           # khung giờ tiết đang dùng (localStorage `schedulingapp-preset-v1`)
   components/
     Header.jsx             # header: logo SchedulingApp + tên app + chuyển view
-                           # Lịch học / Mô phỏng + chuyển học kỳ + menu Cài đặt
-                           # (nhắc lịch, xuất .ics, cài app nằm trong menu)
+                           # Lịch học / Mô phỏng / Lịch thi + chuyển học kỳ + menu Cài đặt
+                           # (nhắc lịch, xuất .ics, xuất PNG, cài app, khung giờ tiết)
+    PresetSettings.jsx     # mục "Khung giờ tiết" trong menu Cài đặt (chọn preset / tự chỉnh)
+    ExamList.jsx           # tab Lịch thi: buổi thi + task thi, đếm ngược
+    FreeTimeFinder.jsx     # tìm giờ trống chung với bạn bè (lưu localStorage)
     StatsBar.jsx           # 4 ô thống kê: môn, buổi/tuần, ngày học, tiết/tuần
     ConflictBanner.jsx     # banner cảnh báo các buổi đang trùng tiết
     ReminderBanner.jsx     # banner vàng nhắc sắp học / sắp đến hạn
@@ -195,12 +291,15 @@ src/
     Field.jsx              # một field có nhãn trong form
   data/
     seed.js                # dữ liệu gốc HK1 + HK2, chuyển học kỳ
+    presets.js             # preset khung giờ tiết: IUH (mặc định) + mẫu 50 phút
   lib/
     time.js                # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay,
-                           # lần học tiếp theo, đếm ngược (hàm thuần)
+                           # lần học tiếp theo, đếm ngược, kiểm tra khung giờ (hàm thuần)
     colors.js              # bảng màu theo môn (PALETTE, colorFor, TYPE_STYLE)
     download.js            # tải chuỗi text xuống máy dưới dạng file
     ics.js                 # xuất file .ics cho Google Calendar (hàm thuần)
     planScore.js           # chấm điểm phương án + tìm cặp trùng (hàm thuần)
     importers.js           # parser dán web trường / dán nhanh / CSV-TSV (hàm thuần)
+    exportPng.js           # vẽ lưới tuần ra ảnh PNG bằng Canvas (hàm thuần + tải file)
+    freeTime.js            # tìm giờ trống chung (hàm thuần)
 ```

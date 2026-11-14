@@ -44,7 +44,7 @@ function saveNotified(set) {
  * Thông báo trình duyệt chỉ là phần thêm — banner trong app luôn hiện
  * dù người dùng từ chối quyền thông báo.
  */
-export function useReminders(sessions, tasks) {
+export function useReminders(sessions, tasks, times) {
   const [settings, setSettings] = useState(loadSettings)
   const [permission, setPermission] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'unsupported',
@@ -55,9 +55,11 @@ export function useReminders(sessions, tasks) {
   const sessionsRef = useRef(sessions)
   const tasksRef = useRef(tasks)
   const settingsRef = useRef(settings)
+  const timesRef = useRef(times)
   sessionsRef.current = sessions
   tasksRef.current = tasks
   settingsRef.current = settings
+  timesRef.current = times
 
   useEffect(() => {
     localStorage.setItem(REMINDERS_KEY, JSON.stringify(settings))
@@ -83,7 +85,7 @@ export function useReminders(sessions, tasks) {
     let changed = false
 
     for (const s of sessionsRef.current) {
-      const next = nextOccurrence(s, now)
+      const next = nextOccurrence(s, now, timesRef.current)
       const diffMin = (next - now) / 60000
       if (diffMin < 0 || diffMin > cfg.minutesBefore) continue
       const key = `class:${s.id}:${formatDateLocal(next)}`

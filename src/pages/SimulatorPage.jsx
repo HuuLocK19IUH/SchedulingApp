@@ -12,7 +12,7 @@ import { PlanImport } from '../components/PlanImport.jsx'
 // Mô phỏng đăng ký: Lộc nhập các lớp định đăng ký, app vẽ thử lịch cả kỳ,
 // báo trùng ngay, chấm điểm và so sánh các phương án A / B / C.
 // Chưa có OCR ảnh chụp — đó là bước sau.
-export function SimulatorPage({ schedule }) {
+export function SimulatorPage({ schedule, times }) {
   const plans = usePlans()
   const {
     plans: planList, activePlan, activePlanId, setActivePlanId,
@@ -136,7 +136,7 @@ export function SimulatorPage({ schedule }) {
       )}
 
       {/* Lưới thử — bấm khối môn để xem chi tiết, bấm ô trống để thêm lớp */}
-      <WeekGrid
+      <WeekGrid times={times}
         sessions={sessions} filteredIds={filteredIds} conflicts={conflicts} today={today}
         mobileDay={mobileDay} onMobileDayChange={setMobileDay}
         daySessions={daySessions} onSelect={setDetail}
@@ -160,14 +160,14 @@ export function SimulatorPage({ schedule }) {
         onApplyPlan={handleApply}
       />
 
-      <SessionDetailModal
+      <SessionDetailModal times={times}
         session={detail}
         isConflict={detail ? conflicts.has(detail.id) : false}
         onClose={() => setDetail(null)}
         onEdit={() => { setForm({ ...detail }); setDetail(null) }}
         onDelete={() => { removeSession(activePlanId, detail.id); setDetail(null) }}
       />
-      <SessionFormModal
+      <SessionFormModal times={times}
         form={form}
         onFormChange={setForm}
         formConflicts={formConflicts}

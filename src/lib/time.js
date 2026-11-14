@@ -30,10 +30,34 @@ export function sessionLabel(period) {
   return 'Tối'
 }
 
-export function timeRange(start, end) {
-  const [s] = PERIOD_TIMES[start - 1].split(' - ')
-  const [, e] = PERIOD_TIMES[end - 1].split(' - ')
+export function timeRange(start, end, times = PERIOD_TIMES) {
+  const [s] = times[start - 1].split(' - ')
+  const [, e] = times[end - 1].split(' - ')
   return `${s} - ${e}`
+}
+
+/**
+ * Kiểm tra một mảng 16 khung giờ tiết dạng "H:MM - H:MM".
+ * Trả về null nếu hợp lệ, ngược lại trả về chuỗi lỗi (tiếng Việt).
+ * Quy tắc: đủ 16 tiết, mỗi tiết kết thúc sau khi bắt đầu, và các tiết
+ * xếp theo thứ tự tăng dần (tiết sau bắt đầu không sớm hơn tiết trước kết thúc).
+ */
+export function validatePeriodTimes(times) {
+  if (!Array.isArray(times) || times.length !== 16) return 'Cần đủ 16 tiết (tiết 1–16).'
+  const parsed = []
+  for (let i = 0; i < 16; i++) {
+    const m = String(times[i] ?? '').trim().match(/^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/)
+    if (!m) return `Tiết ${i + 1}: giờ chưa đúng dạng "H:MM - H:MM" (VD: 7:00 - 7:50).`
+    const start = Number(m[1]) * 60 + Number(m[2])
+    const end = Number(m[3]) * 60 + Number(m[4])
+    if (Number(m[1]) > 23 || Number(m[3]) > 23 || Number(m[2]) > 59 || Number(m[4]) > 59) return `Tiết ${i + 1}: giờ không hợp lệ.`
+    if (end <= start) return `Tiết ${i + 1}: giờ kết thúc phải sau giờ bắt đầu.`
+    parsed.push({ start, end })
+  }
+  for (let i = 1; i < 16; i++) {
+    if (parsed[i].start < parsed[i - 1].end) return `Tiết ${i + 1} bắt đầu (${times[i]}) sớm hơn tiết ${i} kết thúc — các tiết phải xếp theo thứ tự tăng dần.`
+  }
+  return null
 }
 
 /** Hai buổi trùng nhau nếu cùng ngày và khoảng tiết giao nhau. */
@@ -73,12 +97,12 @@ export function minutesOf(timeStr) {
   return h * 60 + m
 }
 
-export function periodStartMinutes(period) {
-  return minutesOf(PERIOD_TIMES[period - 1].split(' - ')[0])
+export function periodStartMinutes(period, times = PERIOD_TIMES) {
+  return minutesOf(times[period - 1].split(' - ')[0])
 }
 
-export function periodEndMinutes(period) {
-  return minutesOf(PERIOD_TIMES[period - 1].split(' - ')[1])
+export function periodEndMinutes(period, times = PERIOD_TIMES) {
+  return minutesOf(times[period - 1].split(' - ')[1])
 }
 
 /** Chuyển chỉ số ngày của app (0 = Thứ 2) sang JS getDay (0 = CN). */
@@ -91,8 +115,8 @@ export function appDayToJsDay(appDay) {
  * Nếu hôm nay đúng thứ đó và chưa tới giờ bắt đầu thì trả về hôm nay,
  * ngược lại là tuần sau cùng thứ đó. Giờ lấy theo giờ địa phương.
  */
-export function nextOccurrence(session, from = new Date()) {
-  const startMin = periodStartMinutes(session.start)
+export function nextOccurrence(session, from = new Date(), times = PERIOD_TIMES) {
+  const startMin = periodStartMinutes(session.start, times)
   const d = new Date(from)
   d.setSeconds(0, 0)
   const targetJs = appDayToJsDay(session.day)
@@ -107,18 +131,18 @@ export function nextOccurrence(session, from = new Date()) {
 }
 
 /** Giờ kết thúc của một buổi vào ngày `date` (cùng ngày với lần học đó). */
-export function sessionEndDate(session, date) {
-  const endMin = periodEndMinutes(session.end)
+export function sessionEndDate(session, date, times = PERIOD_TIMES) {
+  const endMin = periodEndMinutes(session.end, times)
   const d = new Date(date)
   d.setHours(Math.floor(endMin / 60), endMin % 60, 0, 0)
   return d
 }
 
 /** Trạng thái của một buổi hôm nay: 'upcoming' | 'ongoing' | 'done'. */
-export function sessionStatusToday(session, now = new Date()) {
+export function sessionStatusToday(session, now = new Date(), times = PERIOD_TIMES) {
   if (session.day !== todayIndex(now)) return 'other-day'
-  const start = periodStartMinutes(session.start)
-  const end = periodEndMinutes(session.end)
+  const start = periodStartMinutes(session.start, times)
+  const end = periodEndMinutes(session.end, times)
   const nowMin = now.getHours() * 60 + now.getMinutes()
   if (nowMin < start) return 'upcoming'
   if (nowMin < end) return 'ongoing'

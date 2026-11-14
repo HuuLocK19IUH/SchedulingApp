@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { findConflicts, todayIndex } from '../lib/time.js'
 import { EMPTY_FORM, useSchedule } from '../hooks/useSchedule.js'
 import { useTasks } from '../hooks/useTasks.js'
+import { usePreset } from '../hooks/usePreset.js'
 import { useReminders } from '../hooks/useReminders.js'
 import { useInstallPrompt } from '../hooks/useInstallPrompt.js'
 import { Header } from '../components/Header.jsx'
@@ -16,9 +17,13 @@ import { WeekGrid } from '../components/WeekGrid.jsx'
 import { SessionDetailModal } from '../components/SessionDetailModal.jsx'
 import { SessionFormModal } from '../components/SessionFormModal.jsx'
 import { SimulatorPage } from './SimulatorPage.jsx'
+import { ExamList } from '../components/ExamList.jsx'
+import { FreeTimeFinder } from '../components/FreeTimeFinder.jsx'
+import { exportTimetablePng } from '../lib/exportPng.js'
 
 export function DashboardPage() {
-  const schedule = useSchedule()
+  const preset = usePreset()
+  const schedule = useSchedule(preset.times)
   const {
     semester, setSemester, sessions, conflicts,
     today, tomorrow, daySessions, notice,
@@ -26,7 +31,7 @@ export function DashboardPage() {
     exportCSV, exportBackup, exportIcs, importJSON, restoreSeed,
   } = schedule
   const tasksApi = useTasks()
-  const reminders = useReminders(sessions, tasksApi.tasks)
+  const reminders = useReminders(sessions, tasksApi.tasks, preset.times)
   const install = useInstallPrompt()
   const [taskPrefill, setTaskPrefill] = useState(null)
   const subjects = useMemo(
@@ -35,7 +40,7 @@ export function DashboardPage() {
   )
 
   // Trạng thái giao diện (tìm kiếm, lọc, modal đang mở...) — dữ liệu nằm ở hook.
-  const [view, setView] = useState('schedule') // 'schedule' | 'simulator'
+  const [view, setView] = useState('schedule') // 'schedule' | 'simulator' | 'exams'
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('Tất cả')
   const [mobileDay, setMobileDay] = useState(todayIndex())
@@ -80,6 +85,8 @@ export function DashboardPage() {
         onExportCSV={exportCSV}
         onExportBackup={exportBackup}
         onExportIcs={() => exportIcs(tasksApi.tasks)}
+        onExportPng={() => exportTimetablePng(sessions, preset.times, semester === 'hk2' ? 'HK2' : 'HK1')}
+        preset={preset}
         onImportJSON={importJSON}
         onRestoreSeed={restoreSeed}
         view={view}
@@ -92,7 +99,16 @@ export function DashboardPage() {
       />
 
       {view === 'simulator' ? (
-        <SimulatorPage schedule={schedule} />
+        <SimulatorPage schedule={schedule} times={preset.times} />
+      ) : view === 'exams' ? (
+        <main className="mx-auto max-w-7xl px-4 py-5">
+          <h2 className="text-xl font-extrabold text-red-700">Lịch thi</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Riêng các buổi thi và task thi — có ngày thi thì đếm ngược, chưa có ngày thì xếp sau.
+            Các buổi thi vẫn hiện trên lưới tuần ở tab Lịch học.
+          </p>
+          <ExamList sessions={sessions} tasks={tasksApi.tasks} times={preset.times} onSelectSession={setDetail} />
+        </main>
       ) : (
       <main className="mx-auto max-w-7xl px-4 py-5">
         {notice && (
@@ -102,7 +118,7 @@ export function DashboardPage() {
 
         <StatsBar stats={stats} />
         <ConflictBanner conflictList={conflictList} />
-        <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} />
+        <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} times={preset.times} />
         <TasksPanel
           tasks={tasksApi.tasks}
           subjects={subjects}
@@ -129,7 +145,9 @@ export function DashboardPage() {
           mobileDay={mobileDay} onMobileDayChange={setMobileDay}
           daySessions={daySessions} onSelect={setDetail}
           onEmptyCell={(day, period) => setForm({ ...EMPTY_FORM, day, start: period, end: period })}
+          times={preset.times}
         />
+        <FreeTimeFinder mySessions={sessions} times={preset.times} />
 
         <footer className="mt-6 text-center text-xs text-slate-400">
           Dữ liệu chỉ lưu trên trình duyệt này — Backup JSON trước khi đổi máy.
@@ -139,6 +157,7 @@ export function DashboardPage() {
 
       <SessionDetailModal
         session={detail}
+        times={preset.times}
         isConflict={detail ? conflicts.has(detail.id) : false}
         onClose={() => setDetail(null)}
         onEdit={() => { setForm({ ...detail }); setDetail(null) }}
@@ -151,6 +170,7 @@ export function DashboardPage() {
       />
       <SessionFormModal
         form={form}
+        times={preset.times}
         onFormChange={setForm}
         formConflicts={formConflicts}
         onClose={() => setForm(null)}

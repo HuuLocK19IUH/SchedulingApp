@@ -2,7 +2,7 @@ import { DAY_NAMES, PERIOD_TIMES, TYPES, sessionLabel, timeRange } from '../lib/
 import { Modal } from './Modal.jsx'
 import { Field } from './Field.jsx'
 
-export function SessionFormModal({ form, onFormChange, formConflicts, onClose, onSave }) {
+export function SessionFormModal({ form, onFormChange, formConflicts, onClose, onSave, times = PERIOD_TIMES }) {
   if (!form) return null
   return (
     <Modal onClose={onClose}>
@@ -30,16 +30,21 @@ export function SessionFormModal({ form, onFormChange, formConflicts, onClose, o
           </Field>
           <Field label="Từ tiết">
             <select value={form.start} onChange={(e) => onFormChange({ ...form, start: Number(e.target.value), end: Math.max(Number(e.target.value), form.end) })} className="input">
-              {PERIOD_TIMES.map((_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+              {times.map((_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
             </select>
           </Field>
           <Field label="Đến tiết">
             <select value={form.end} onChange={(e) => onFormChange({ ...form, end: Number(e.target.value) })} className="input">
-              {PERIOD_TIMES.map((_, i) => <option key={i} value={i + 1} disabled={i + 1 < form.start}>{i + 1}</option>)}
+              {times.map((_, i) => <option key={i} value={i + 1} disabled={i + 1 < form.start}>{i + 1}</option>)}
             </select>
           </Field>
         </div>
-        <p className="text-xs text-slate-500">Giờ: {timeRange(Number(form.start), Number(form.end))} · Ca {sessionLabel(Number(form.start))}</p>
+        <p className="text-xs text-slate-500">Giờ: {timeRange(Number(form.start), Number(form.end), times)} · Ca {sessionLabel(Number(form.start))}</p>
+        {form.type === 'Thi' && (
+          <Field label="Ngày thi (không bắt buộc)">
+            <input type="date" value={form.examDate || ''} onChange={(e) => onFormChange({ ...form, examDate: e.target.value })} className="input" />
+          </Field>
+        )}
         {formConflicts.length > 0 && (
           <div className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
             <b>⚠️ Trùng tiết với:</b>

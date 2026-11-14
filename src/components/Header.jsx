@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { SEMESTERS } from '../data/seed.js'
+import { PresetSettings } from './PresetSettings.jsx'
 
-export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup, onImportJSON, onRestoreSeed, view, onViewChange, onExportIcs, reminders, onReminderToggle, onReminderMinutes, onRequestPermission, install }) {
+export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup, onImportJSON, onRestoreSeed, view, onViewChange, onExportIcs, onExportPng, preset, reminders, onReminderToggle, onReminderMinutes, onRequestPermission, install }) {
   const fileRef = useRef(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const menuRef = useRef(null)
@@ -53,6 +54,12 @@ export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup
               >
                 Mô phỏng đăng ký
               </button>
+              <button
+                onClick={() => onViewChange('exams')}
+                className={`rounded-md px-3 py-1.5 text-sm font-semibold ${view === 'exams' ? 'bg-red-600 text-white shadow' : 'text-red-600'}`}
+              >
+                Lịch thi
+              </button>
             </div>
           )}
           <div className="flex rounded-lg bg-slate-100 p-1">
@@ -103,6 +110,12 @@ export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup
                     📅 Xuất .ics (Google Calendar) <span className="block text-xs font-normal text-slate-500">Tải file .ics rồi import vào Google Calendar → Lịch → Cài đặt → Nhập &amp; xuất</span>
                   </button>
                 )}
+                {onExportPng && (
+                  <button onClick={() => run(onExportPng)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50">
+                    🖼️ Xuất ảnh PNG <span className="block text-xs font-normal text-slate-500">Tải lưới tuần thành ảnh để share nhóm</span>
+                  </button>
+                )}
+                {preset && <PresetSettings preset={preset} />}
                 {reminders && (
                   <div className="border-t border-slate-100 px-3 py-2">
                     <p className="text-sm font-bold">🔔 Nhắc lịch</p>

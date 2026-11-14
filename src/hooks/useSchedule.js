@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SEED, SEMESTERS } from '../data/seed.js'
-import { conflictIds, timeRange, todayIndex, DAY_NAMES } from '../lib/time.js'
+import { conflictIds, timeRange, todayIndex, DAY_NAMES, PERIOD_TIMES } from '../lib/time.js'
 import { download } from '../lib/download.js'
 import { buildIcs } from '../lib/ics.js'
 
@@ -8,7 +8,7 @@ export const STORAGE_KEY = 'xep-lich-hoc-v1'
 
 export const EMPTY_FORM = {
   subject: '', code: '', className: '', day: 0, start: 7, end: 9,
-  room: '', teacher: '', note: '', type: 'Học',
+  room: '', teacher: '', note: '', type: 'Học', examDate: '',
 }
 
 function loadData() {
@@ -45,7 +45,7 @@ export function parsePeriods(text) {
  * thêm/sửa/xóa buổi, nhập nhanh bằng dán, xuất/nhập file, khôi phục gốc.
  * Trạng thái giao diện (tìm kiếm, lọc, modal đang mở...) nằm ở DashboardPage.
  */
-export function useSchedule() {
+export function useSchedule(times = PERIOD_TIMES) {
   const [data, setData] = useState(loadData)
   const [semester, setSemester] = useState('hk1')
   const [notice, setNotice] = useState('')
@@ -121,7 +121,7 @@ export function useSchedule() {
     const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
     const rows = sessions.map((s) => [
       s.subject, s.code, s.className, DAY_NAMES[s.day], s.start, s.end,
-      timeRange(s.start, s.end), s.room, s.teacher, s.note, s.type,
+      timeRange(s.start, s.end, times), s.room, s.teacher, s.note, s.type,
     ].map(esc).join(','))
     download(`lich-hoc-${semester}.csv`, '\uFEFF' + [head, ...rows].join('\n'), 'text/csv')
   }
@@ -130,7 +130,7 @@ export function useSchedule() {
   // Task được truyền vào từ DashboardPage (hook này không giữ task).
   function exportIcs(tasks = []) {
     const allSessions = [...(data.hk1 || []), ...(data.hk2 || [])]
-    download('schedulingapp-lich-hoc.ics', buildIcs(allSessions, tasks), 'text/calendar')
+    download('schedulingapp-lich-hoc.ics', buildIcs(allSessions, tasks, { times }), 'text/calendar')
     showNotice('Đã tải file .ics — import vào Google Calendar để đồng bộ.', 4000)
   }
 
