@@ -1,9 +1,17 @@
 @import "tailwindcss";
 
+/* Dark mode theo class .dark trên <html> (hook useTheme gắn/gỡ class này). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 body {
   font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
   background: #f6f7fb;
   color: #111827;
+}
+
+.dark body {
+  background: #0f172a;
+  color: #f1f5f9;
 }
 
 .input {
@@ -14,9 +22,23 @@ body {
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   outline: none;
+  color: #111827;
 }
 .input:focus {
   border-color: #4f46e5;
+}
+.dark .input {
+  border-color: #475569;
+  background: #1e293b;
+  color: #f1f5f9;
+}
+.dark .input::placeholder {
+  color: #94a3b8;
+}
+/* Option trong select ở dark mode: nền tối để không bị chữ đen trên nền trắng hệ thống. */
+.dark .input option {
+  background: #1e293b;
+  color: #f1f5f9;
 }
 
 /* Lưới lịch: cuộn ngang trên màn hình hẹp thay vì vỡ layout */

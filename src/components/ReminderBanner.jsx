@@ -7,7 +7,7 @@ export function ReminderBanner({ banners, onDismiss }) {
           <span className="mt-0.5">🔔</span>
           <span className="min-w-0 flex-1">
             <span className="block font-bold text-amber-900">{b.title}</span>
-            {b.detail && <span className="block text-amber-800">{b.detail}</span>}
+            {b.detail && <span className="block text-amber-800 dark:text-amber-200">{b.detail}</span>}
           </span>
           <button onClick={() => onDismiss(b.id)} aria-label="Đóng nhắc nhở" className="font-bold text-amber-700">✕</button>
         </div>

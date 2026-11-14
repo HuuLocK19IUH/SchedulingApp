@@ -8,7 +8,7 @@ export const STORAGE_KEY = 'xep-lich-hoc-v1'
 
 export const EMPTY_FORM = {
   subject: '', code: '', className: '', day: 0, start: 7, end: 9,
-  room: '', teacher: '', note: '', type: 'Học', examDate: '',
+  room: '', teacher: '', note: '', type: 'Học', examDate: '', icon: '',
 }
 
 function loadData() {

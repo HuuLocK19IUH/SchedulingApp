@@ -63,21 +63,21 @@ export function FreeTimeFinder({ mySessions, times }) {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
       <h2 className="text-lg font-extrabold">Tìm giờ trống chung</h2>
-      <p className="mt-1 text-sm text-slate-500">
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
         Thêm lịch bận của bạn bè, app tìm khung giờ cả nhóm cùng rảnh để họp nhóm / học nhóm.
         Chia sẻ bằng cách bạn xuất lịch (CSV/JSON/.ics) rồi Lộc nhập vào — chưa có lịch chung trực tuyến vì app không có backend.
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2">
         {friends.map((f) => (
-          <span key={f.id} className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-800">
+          <span key={f.id} className="inline-flex items-center gap-2 rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1.5 text-sm font-semibold text-indigo-800 dark:text-indigo-200">
             {f.name} · {f.sessions.length} buổi bận
-            <button onClick={() => removeFriend(f.id)} aria-label={`Xóa ${f.name}`} className="font-bold text-indigo-400 hover:text-red-600">×</button>
+            <button onClick={() => removeFriend(f.id)} aria-label={`Xóa ${f.name}`} className="font-bold text-indigo-400 dark:text-indigo-300 hover:text-red-600">×</button>
           </span>
         ))}
-        {friends.length === 0 && <span className="text-sm text-slate-400">Chưa có bạn nào — thêm bạn đầu tiên bên dưới.</span>}
+        {friends.length === 0 && <span className="text-sm text-slate-400 dark:text-slate-500">Chưa có bạn nào — thêm bạn đầu tiên bên dưới.</span>}
       </div>
 
       <div className="mt-3 grid gap-3 md:grid-cols-[1fr_2fr]">
@@ -92,15 +92,15 @@ export function FreeTimeFinder({ mySessions, times }) {
         />
       </div>
       <button onClick={addFriend} className="mt-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">+ Thêm bạn</button>
-      {message && <p className="mt-2 text-sm text-slate-600">{message}</p>}
+      {message && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</p>}
 
       <h3 className="mt-5 font-bold">Khung giờ trống dài nhất (≥ 2 tiết)</h3>
       {topSlots.length === 0 ? (
-        <p className="mt-1 text-sm text-slate-500">Không còn khung trống ≥ 2 tiết trong tuần — thử giảm buổi bận hoặc họp vào khung 1 tiết bên dưới.</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Không còn khung trống ≥ 2 tiết trong tuần — thử giảm buổi bận hoặc họp vào khung 1 tiết bên dưới.</p>
       ) : (
         <ul className="mt-2 space-y-1.5">
           {topSlots.slice(0, 5).map((s, i) => (
-            <li key={i} className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+            <li key={i} className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 px-3 py-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
               {DAY_NAMES[s.day]} · Tiết {s.start}-{s.end} ({timeRange(s.start, s.end, times)}) — trống {s.periods} tiết, cả nhóm rảnh
             </li>
           ))}
@@ -110,12 +110,12 @@ export function FreeTimeFinder({ mySessions, times }) {
       <h3 className="mt-5 font-bold">Giờ trống theo ngày</h3>
       <div className="mt-2 grid gap-2 md:grid-cols-2">
         {DAY_NAMES.map((d, day) => (
-          <div key={d} className="rounded-xl border border-slate-100 p-3">
+          <div key={d} className="rounded-xl border border-slate-100 dark:border-slate-800 p-3">
             <p className="text-sm font-bold">{d}</p>
             {byDay[day].length === 0 ? (
-              <p className="text-xs text-slate-400">Kín cả ngày.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Kín cả ngày.</p>
             ) : (
-              <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
+              <ul className="mt-1 space-y-0.5 text-xs text-slate-600 dark:text-slate-300">
                 {byDay[day].map((s, i) => (
                   <li key={i}>Tiết {s.start}-{s.end} ({timeRange(s.start, s.end, times)}) — trống {s.periods} tiết</li>
                 ))}

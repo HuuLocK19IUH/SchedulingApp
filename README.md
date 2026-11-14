@@ -60,11 +60,43 @@ npm run preview
 - Tab **Lịch thi** riêng (màu đỏ): buổi thi + task thi, có ngày thi thì
   đếm ngược.
 - Xuất ảnh PNG lưới tuần để share nhóm, và **Tìm giờ trống chung** để
-  tìm khung giờ cả nhóm cùng rảnh.
+  tìm khung giờ cả nhóm cùng rảnh — giờ nằm ở mục riêng trên sidebar.
+- **Cá nhân hóa:** giao diện sáng/tối (hoặc theo hệ thống), đổi nền
+  dashboard (Mặc định / Hoàng hôn / Rừng xanh / Biển / màu tự chọn),
+  gắn icon emoji cho từng buổi học. Xem mục "Cá nhân hóa" bên dưới.
+- Điều hướng bằng **sidebar trái** (desktop): Lịch học, Lịch thi,
+  Mô phỏng đăng ký, Giờ trống chung, Task & Deadline, Cài đặt — thu gọn
+  được về dạng chỉ icon. Trên điện thoại sidebar thành thanh tab ngang.
+
+## Cá nhân hóa
+
+- **Sáng / tối:** nút ☀️/🌙 trên header (bấm để xoay Sáng → Tối →
+  Theo hệ thống) hoặc trong menu Cài đặt → "Giao diện". Chế độ "Theo
+  hệ thống" tự theo giao diện máy, đổi live. Lưu ở localStorage key
+  `schedulingapp-theme-v1`.
+- **Nền dashboard:** trong menu Cài đặt → "Nền dashboard": Mặc định,
+  Hoàng hôn, Rừng xanh, Biển, hoặc Màu tự chọn (bấm ô màu / nhập mã
+  hex, ví dụ `#4f46e5`). Nền là gradient; ở dark mode mọi nền tự đổi
+  sang bản tối để chữ vẫn đọc được.
+- **Icon buổi học:** khi thêm/sửa buổi, chọn 1 trong 16 icon emoji
+  (💻 Lập trình, 🧮 Toán/Thống kê, 📝 Thi, …). Buổi chưa chọn icon thì
+  dùng icon mặc định theo loại: Học 📚, Thi 📝, Làm việc 💼, Cá nhân ⭐.
+  Icon hiện trên khối môn ở lưới tuần, widget Hôm nay, modal chi tiết,
+  tab Lịch thi và cả trong mô phỏng đăng ký.
+
+## Điều hướng
+
+Sidebar trái (desktop, rộng 240px, thu gọn còn 64px bằng nút "« Thu
+gọn" ở cuối — lựa chọn được nhớ ở localStorage
+`schedulingapp-sidebar-v1`): logo + Lịch học, Lịch thi, Mô phỏng đăng
+ký, Giờ trống chung, Task & Deadline, Cài đặt; cuối sidebar có chuyển
+học kỳ HK1/HK2 và nút sáng/tối. Trên điện thoại (<md) sidebar thành
+thanh tab ngang cuộn được ở đầu trang — không dùng hamburger, mọi mục
+đều thấy ngay.
 
 ## Mô phỏng đăng ký
 
-Bấm **Mô phỏng đăng ký** trên header để thử xếp lịch *trước* khi đăng ký
+Bấm **Mô phỏng đăng ký** trên sidebar để thử xếp lịch *trước* khi đăng ký
 thật trên web trường. Mỗi phương án là một lịch thử độc lập, lưu riêng
 (localStorage key `schedulingapp-plans-v1`) — lịch chính không bị động
 cho tới khi Lộc bấm **Chốt phương án này**.
@@ -164,8 +196,9 @@ Chưa có OCR ảnh chụp lịch — đó là bước sau.
 ## Kiểm thử & CI
 
 ```bash
-npm test        # Vitest — 24 test cho logic thuần (giờ tiết, trùng tiết,
-                # chấm điểm phương án, import dán nhanh/CSV, xuất .ics, giờ trống)
+npm test        # Vitest — 27 test cho logic thuần (giờ tiết, trùng tiết,
+                # chấm điểm phương án, import dán nhanh/CSV, xuất .ics, giờ trống,
+                # icon mặc định theo loại buổi)
 npm run build
 ```
 
@@ -186,12 +219,16 @@ push lên `main` là Vercel deploy lại, không cần token hay secret gì thê
   tab Lịch thi, xuất ảnh PNG, tìm giờ trống chung.
 - [x] Phần 4 — Project thật (14/11/2026): Vitest, GitHub Actions CI,
   deploy Vercel tự động, README có Demo/Screenshots/Roadmap.
+- [x] Phần 5 — Cá nhân hóa + sidebar (14/11/2026): giao diện sáng/tối,
+  nền dashboard tùy chọn, icon cho từng buổi học, sidebar trái
+  (desktop) / thanh tab ngang (mobile), Task & Giờ trống chung thành
+  mục riêng.
 - [ ] Tiếp theo: OCR ảnh chụp lịch, preset giờ thật của các trường khác
   (ghi rõ nguồn), đồng bộ đám mây khi cần (xem bên dưới).
 
 ## Có cần backend không?
 
-**Không — với tất cả tính năng tới Phần 4, app vẫn chỉ cần frontend.**
+**Không — với tất cả tính năng tới Phần 5, app vẫn chỉ cần frontend.**
 Mọi dữ liệu nằm ở localStorage trên máy Lộc. Chỉ khi nào Lộc muốn lịch
 chung trực tuyến thật sự (nhiều người cùng xem/sửa một lịch, đăng nhập
 tài khoản) mới cần backend. Khi đó hướng gọn nhất là Supabase, chỉ cần
@@ -266,10 +303,15 @@ src/
     useReminders.js        # nhắc giờ học + thi/deadline, banner + Notification
     useInstallPrompt.js    # bắt sự kiện beforeinstallprompt để hiện nút cài app
     usePreset.js           # khung giờ tiết đang dùng (localStorage `schedulingapp-preset-v1`)
+    useTheme.js            # sáng/tối + nền dashboard (localStorage `schedulingapp-theme-v1`,
+                           # gắn class .dark lên <html>, theo hệ thống live)
   components/
-    Header.jsx             # header: logo SchedulingApp + tên app + chuyển view
-                           # Lịch học / Mô phỏng / Lịch thi + chuyển học kỳ + menu Cài đặt
-                           # (nhắc lịch, xuất .ics, xuất PNG, cài app, khung giờ tiết)
+    Header.jsx             # header gọn: tiêu đề view + chuyển học kỳ + nút sáng/tối
+                           # + menu Cài đặt (giao diện, nhắc lịch, xuất .ics/PNG, cài app,
+                           # khung giờ tiết) — menu điều khiển từ DashboardPage
+    Sidebar.jsx            # sidebar trái: logo + điều hướng 5 mục + Cài đặt,
+                           # chuyển học kỳ + sáng/tối ở cuối, thu gọn về chỉ icon
+    ThemeSettings.jsx      # mục "Giao diện" trong menu Cài đặt (sáng/tối + nền)
     PresetSettings.jsx     # mục "Khung giờ tiết" trong menu Cài đặt (chọn preset / tự chỉnh)
     ExamList.jsx           # tab Lịch thi: buổi thi + task thi, đếm ngược
     FreeTimeFinder.jsx     # tìm giờ trống chung với bạn bè (lưu localStorage)
@@ -295,7 +337,9 @@ src/
   lib/
     time.js                # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay,
                            # lần học tiếp theo, đếm ngược, kiểm tra khung giờ (hàm thuần)
-    colors.js              # bảng màu theo môn (PALETTE, colorFor, TYPE_STYLE)
+    colors.js              # bảng màu theo môn (PALETTE sáng + tối, colorFor, TYPE_STYLE)
+    icons.js               # icon emoji cho buổi học + icon mặc định theo loại (hàm thuần)
+    theme.js               # nền dashboard: preset gradient + trộn màu tự chọn (hàm thuần)
     download.js            # tải chuỗi text xuống máy dưới dạng file
     ics.js                 # xuất file .ics cho Google Calendar (hàm thuần)
     planScore.js           # chấm điểm phương án + tìm cặp trùng (hàm thuần)

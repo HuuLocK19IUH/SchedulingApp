@@ -1,5 +1,6 @@
 import { DAY_NAMES, sessionLabel, timeRange } from '../lib/time.js'
 import { TYPE_STYLE } from '../lib/colors.js'
+import { iconFor } from '../lib/icons.js'
 import { Modal } from './Modal.jsx'
 import { Row } from './Row.jsx'
 
@@ -8,7 +9,7 @@ export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDel
   return (
     <Modal onClose={onClose}>
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-extrabold leading-snug">{session.subject}</h3>
+        <h3 className="text-lg font-extrabold leading-snug">{iconFor(session)} {session.subject}</h3>
         <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${TYPE_STYLE[session.type]}`}>{session.type}</span>
       </div>
       <dl className="mt-4 space-y-2 text-sm">
@@ -24,15 +25,15 @@ export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDel
         {session.note && <Row label="Ghi chú" value={session.note} />}
       </dl>
       {isConflict && (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">⚠️ Buổi này đang trùng tiết với một buổi khác cùng ngày — kiểm tra lại với web trường.</p>
+        <p className="mt-3 rounded-lg bg-red-50 dark:bg-red-950/60 px-3 py-2 text-sm font-semibold text-red-700 dark:text-red-300">⚠️ Buổi này đang trùng tiết với một buổi khác cùng ngày — kiểm tra lại với web trường.</p>
       )}
       <div className="mt-5 flex flex-wrap gap-2">
         <button onClick={onEdit} className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Sửa</button>
         {onAddTask && (
-          <button onClick={onAddTask} className="flex-1 rounded-xl border border-indigo-300 px-4 py-2 text-sm font-bold text-indigo-700">＋ Thêm task cho môn này</button>
+          <button onClick={onAddTask} className="flex-1 rounded-xl border border-indigo-300 dark:border-indigo-600 px-4 py-2 text-sm font-bold text-indigo-700 dark:text-indigo-300">＋ Thêm task cho môn này</button>
         )}
-        <button onClick={onDelete} className="rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-600">Xóa</button>
-        <button onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Đóng</button>
+        <button onClick={onDelete} className="rounded-xl border border-red-300 dark:border-red-700 px-4 py-2 text-sm font-bold text-red-600 dark:text-red-400">Xóa</button>
+        <button onClick={onClose} className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold">Đóng</button>
       </div>
     </Modal>
   )

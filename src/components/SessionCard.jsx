@@ -1,9 +1,10 @@
 import { colorFor, TYPE_STYLE } from '../lib/colors.js'
+import { iconFor } from '../lib/icons.js'
 
 // Một khối môn trên lưới tuần (desktop). Đặt bằng gridColumn/gridRow
 // theo thứ và khoảng tiết của buổi.
-export function SessionCard({ session, isConflict, onSelect }) {
-  const c = colorFor(session.subject)
+export function SessionCard({ session, isConflict, onSelect, dark = false }) {
+  const c = colorFor(session.subject, dark)
   return (
     <button
       onClick={() => onSelect(session)}
@@ -17,7 +18,7 @@ export function SessionCard({ session, isConflict, onSelect }) {
       }}
     >
       <span className="block text-xs font-bold leading-tight" style={{ color: c.text }}>
-        {isConflict ? '⚠️ ' : ''}{session.subject}
+        {isConflict ? '⚠️ ' : ''}{iconFor(session)} {session.subject}
       </span>
       <span className="mt-0.5 block text-[11px] leading-tight" style={{ color: c.text }}>
         Tiết {session.start}-{session.end}{session.room ? ` · ${session.room}` : ''}

@@ -33,19 +33,19 @@ export function PresetSettings({ preset }) {
   }
 
   return (
-    <div className="border-t border-slate-100 px-3 py-2">
+    <div className="border-t border-slate-100 dark:border-slate-800 px-3 py-2">
       <p className="text-sm font-bold">🕐 Khung giờ tiết</p>
       <select
         value={preset.presetId}
         onChange={(e) => { setDraft(null); setError(''); preset.setPreset(e.target.value) }}
-        className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+        className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
       >
         {preset.presets.map((p) => (
           <option key={p.id} value={p.id}>{p.name}</option>
         ))}
         <option value="custom">Tùy chỉnh…</option>
       </select>
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
         {preset.presetId === 'custom'
           ? 'Đang dùng khung giờ tự chỉnh.'
           : (preset.presets.find((p) => p.id === preset.presetId)?.note || '')}
@@ -56,11 +56,11 @@ export function PresetSettings({ preset }) {
           {rows.map((t, i) => {
             const [s, e] = t.split(' - ')
             return (
-              <label key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
+              <label key={i} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
                 <span className="w-10 shrink-0 font-bold">Tiết {i + 1}</span>
-                <input type="time" value={s} onChange={(e) => setRow(i, 'start', e.target.value)} className="w-full rounded border border-slate-300 px-1 py-0.5" />
+                <input type="time" value={s} onChange={(e) => setRow(i, 'start', e.target.value)} className="w-full rounded border border-slate-300 dark:border-slate-600 px-1 py-0.5" />
                 <span>–</span>
-                <input type="time" value={e} onChange={(e) => setRow(i, 'end', e.target.value)} className="w-full rounded border border-slate-300 px-1 py-0.5" />
+                <input type="time" value={e} onChange={(e) => setRow(i, 'end', e.target.value)} className="w-full rounded border border-slate-300 dark:border-slate-600 px-1 py-0.5" />
               </label>
             )
           })}
@@ -69,15 +69,15 @@ export function PresetSettings({ preset }) {
       {editing && (
         <div className="mt-2 flex gap-2">
           <button onClick={saveCustom} className="flex-1 rounded-lg bg-indigo-600 px-2 py-1.5 text-xs font-bold text-white">Lưu khung giờ</button>
-          <button onClick={() => { setDraft(null); setError(''); preset.resetToIuh() }} className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold">Khôi phục IUH</button>
+          <button onClick={() => { setDraft(null); setError(''); preset.resetToIuh() }} className="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-xs font-semibold">Khôi phục IUH</button>
         </div>
       )}
       {!editing && (
-        <button onClick={startEdit} className="mt-2 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold hover:bg-slate-50">
+        <button onClick={startEdit} className="mt-2 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
           Tự chỉnh từng tiết…
         </button>
       )}
-      {error && <p className="mt-1 text-xs font-semibold text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">{error}</p>}
     </div>
   )
 }

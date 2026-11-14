@@ -1,0 +1,2037 @@
+diff --git a/README.md b/README.md
+index 85949ef..57db485 100644
+--- a/README.md
++++ b/README.md
+@@ -60,11 +60,43 @@ npm run preview
+ - Tab **Lịch thi** riêng (màu đỏ): buổi thi + task thi, có ngày thi thì
+   đếm ngược.
+ - Xuất ảnh PNG lưới tuần để share nhóm, và **Tìm giờ trống chung** để
+-  tìm khung giờ cả nhóm cùng rảnh.
++  tìm khung giờ cả nhóm cùng rảnh — giờ nằm ở mục riêng trên sidebar.
++- **Cá nhân hóa:** giao diện sáng/tối (hoặc theo hệ thống), đổi nền
++  dashboard (Mặc định / Hoàng hôn / Rừng xanh / Biển / màu tự chọn),
++  gắn icon emoji cho từng buổi học. Xem mục "Cá nhân hóa" bên dưới.
++- Điều hướng bằng **sidebar trái** (desktop): Lịch học, Lịch thi,
++  Mô phỏng đăng ký, Giờ trống chung, Task & Deadline, Cài đặt — thu gọn
++  được về dạng chỉ icon. Trên điện thoại sidebar thành thanh tab ngang.
++
++## Cá nhân hóa
++
++- **Sáng / tối:** nút ☀️/🌙 trên header (bấm để xoay Sáng → Tối →
++  Theo hệ thống) hoặc trong menu Cài đặt → "Giao diện". Chế độ "Theo
++  hệ thống" tự theo giao diện máy, đổi live. Lưu ở localStorage key
++  `schedulingapp-theme-v1`.
++- **Nền dashboard:** trong menu Cài đặt → "Nền dashboard": Mặc định,
++  Hoàng hôn, Rừng xanh, Biển, hoặc Màu tự chọn (bấm ô màu / nhập mã
++  hex, ví dụ `#4f46e5`). Nền là gradient; ở dark mode mọi nền tự đổi
++  sang bản tối để chữ vẫn đọc được.
++- **Icon buổi học:** khi thêm/sửa buổi, chọn 1 trong 16 icon emoji
++  (💻 Lập trình, 🧮 Toán/Thống kê, 📝 Thi, …). Buổi chưa chọn icon thì
++  dùng icon mặc định theo loại: Học 📚, Thi 📝, Làm việc 💼, Cá nhân ⭐.
++  Icon hiện trên khối môn ở lưới tuần, widget Hôm nay, modal chi tiết,
++  tab Lịch thi và cả trong mô phỏng đăng ký.
++
++## Điều hướng
++
++Sidebar trái (desktop, rộng 240px, thu gọn còn 64px bằng nút "« Thu
++gọn" ở cuối — lựa chọn được nhớ ở localStorage
++`schedulingapp-sidebar-v1`): logo + Lịch học, Lịch thi, Mô phỏng đăng
++ký, Giờ trống chung, Task & Deadline, Cài đặt; cuối sidebar có chuyển
++học kỳ HK1/HK2 và nút sáng/tối. Trên điện thoại (<md) sidebar thành
++thanh tab ngang cuộn được ở đầu trang — không dùng hamburger, mọi mục
++đều thấy ngay.
+ 
+ ## Mô phỏng đăng ký
+ 
+-Bấm **Mô phỏng đăng ký** trên header để thử xếp lịch *trước* khi đăng ký
++Bấm **Mô phỏng đăng ký** trên sidebar để thử xếp lịch *trước* khi đăng ký
+ thật trên web trường. Mỗi phương án là một lịch thử độc lập, lưu riêng
+ (localStorage key `schedulingapp-plans-v1`) — lịch chính không bị động
+ cho tới khi Lộc bấm **Chốt phương án này**.
+@@ -164,8 +196,9 @@ Chưa có OCR ảnh chụp lịch — đó là bước sau.
+ ## Kiểm thử & CI
+ 
+ ```bash
+-npm test        # Vitest — 24 test cho logic thuần (giờ tiết, trùng tiết,
+-                # chấm điểm phương án, import dán nhanh/CSV, xuất .ics, giờ trống)
++npm test        # Vitest — 27 test cho logic thuần (giờ tiết, trùng tiết,
++                # chấm điểm phương án, import dán nhanh/CSV, xuất .ics, giờ trống,
++                # icon mặc định theo loại buổi)
+ npm run build
+ ```
+ 
+@@ -186,12 +219,16 @@ push lên `main` là Vercel deploy lại, không cần token hay secret gì thê
+   tab Lịch thi, xuất ảnh PNG, tìm giờ trống chung.
+ - [x] Phần 4 — Project thật (14/11/2026): Vitest, GitHub Actions CI,
+   deploy Vercel tự động, README có Demo/Screenshots/Roadmap.
++- [x] Phần 5 — Cá nhân hóa + sidebar (14/11/2026): giao diện sáng/tối,
++  nền dashboard tùy chọn, icon cho từng buổi học, sidebar trái
++  (desktop) / thanh tab ngang (mobile), Task & Giờ trống chung thành
++  mục riêng.
+ - [ ] Tiếp theo: OCR ảnh chụp lịch, preset giờ thật của các trường khác
+   (ghi rõ nguồn), đồng bộ đám mây khi cần (xem bên dưới).
+ 
+ ## Có cần backend không?
+ 
+-**Không — với tất cả tính năng tới Phần 4, app vẫn chỉ cần frontend.**
++**Không — với tất cả tính năng tới Phần 5, app vẫn chỉ cần frontend.**
+ Mọi dữ liệu nằm ở localStorage trên máy Lộc. Chỉ khi nào Lộc muốn lịch
+ chung trực tuyến thật sự (nhiều người cùng xem/sửa một lịch, đăng nhập
+ tài khoản) mới cần backend. Khi đó hướng gọn nhất là Supabase, chỉ cần
+@@ -266,10 +303,15 @@ src/
+     useReminders.js        # nhắc giờ học + thi/deadline, banner + Notification
+     useInstallPrompt.js    # bắt sự kiện beforeinstallprompt để hiện nút cài app
+     usePreset.js           # khung giờ tiết đang dùng (localStorage `schedulingapp-preset-v1`)
++    useTheme.js            # sáng/tối + nền dashboard (localStorage `schedulingapp-theme-v1`,
++                           # gắn class .dark lên <html>, theo hệ thống live)
+   components/
+-    Header.jsx             # header: logo SchedulingApp + tên app + chuyển view
+-                           # Lịch học / Mô phỏng / Lịch thi + chuyển học kỳ + menu Cài đặt
+-                           # (nhắc lịch, xuất .ics, xuất PNG, cài app, khung giờ tiết)
++    Header.jsx             # header gọn: tiêu đề view + chuyển học kỳ + nút sáng/tối
++                           # + menu Cài đặt (giao diện, nhắc lịch, xuất .ics/PNG, cài app,
++                           # khung giờ tiết) — menu điều khiển từ DashboardPage
++    Sidebar.jsx            # sidebar trái: logo + điều hướng 5 mục + Cài đặt,
++                           # chuyển học kỳ + sáng/tối ở cuối, thu gọn về chỉ icon
++    ThemeSettings.jsx      # mục "Giao diện" trong menu Cài đặt (sáng/tối + nền)
+     PresetSettings.jsx     # mục "Khung giờ tiết" trong menu Cài đặt (chọn preset / tự chỉnh)
+     ExamList.jsx           # tab Lịch thi: buổi thi + task thi, đếm ngược
+     FreeTimeFinder.jsx     # tìm giờ trống chung với bạn bè (lưu localStorage)
+@@ -295,7 +337,9 @@ src/
+   lib/
+     time.js                # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay,
+                            # lần học tiếp theo, đếm ngược, kiểm tra khung giờ (hàm thuần)
+-    colors.js              # bảng màu theo môn (PALETTE, colorFor, TYPE_STYLE)
++    colors.js              # bảng màu theo môn (PALETTE sáng + tối, colorFor, TYPE_STYLE)
++    icons.js               # icon emoji cho buổi học + icon mặc định theo loại (hàm thuần)
++    theme.js               # nền dashboard: preset gradient + trộn màu tự chọn (hàm thuần)
+     download.js            # tải chuỗi text xuống máy dưới dạng file
+     ics.js                 # xuất file .ics cho Google Calendar (hàm thuần)
+     planScore.js           # chấm điểm phương án + tìm cặp trùng (hàm thuần)
+diff --git a/src/components/ConflictBanner.jsx b/src/components/ConflictBanner.jsx
+index 2896365..9d71cc7 100644
+--- a/src/components/ConflictBanner.jsx
++++ b/src/components/ConflictBanner.jsx
+@@ -3,9 +3,9 @@ import { DAY_NAMES } from '../lib/time.js'
+ export function ConflictBanner({ conflictList }) {
+   if (conflictList.length === 0) return null
+   return (
+-    <div className="mt-4 rounded-2xl border border-red-300 bg-red-50 p-4">
+-      <p className="font-bold text-red-800">⚠️ Có {conflictList.length} buổi đang trùng tiết — kiểm tra lại với web trường:</p>
+-      <ul className="mt-1 list-disc pl-5 text-sm text-red-700">
++    <div className="mt-4 rounded-2xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/60 p-4">
++      <p className="font-bold text-red-800 dark:text-red-200">⚠️ Có {conflictList.length} buổi đang trùng tiết — kiểm tra lại với web trường:</p>
++      <ul className="mt-1 list-disc pl-5 text-sm text-red-700 dark:text-red-300">
+         {conflictList.map((s) => (
+           <li key={s.id}>{DAY_NAMES[s.day]}, tiết {s.start}-{s.end}: {s.subject} — {s.room || 'chưa có phòng'}</li>
+         ))}
+diff --git a/src/components/ExamList.jsx b/src/components/ExamList.jsx
+index fe4131b..131203d 100644
+--- a/src/components/ExamList.jsx
++++ b/src/components/ExamList.jsx
+@@ -1,4 +1,5 @@
+ import { DAY_NAMES, countdownLabel, daysUntil, timeRange } from '../lib/time.js'
++import { iconFor } from '../lib/icons.js'
+ 
+ // Tab "Lịch thi": liệt kê riêng các buổi loại Thi + task loại Thi,
+ // xếp theo ngày (có ngày trước, sớm nhất trước; chưa có ngày xếp sau).
+@@ -32,7 +33,7 @@ export function ExamList({ sessions, tasks, times, onSelectSession }) {
+ 
+   if (all.length === 0) {
+     return (
+-      <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
++      <div className="mt-5 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60 p-5 text-sm text-red-800 dark:text-red-200">
+         <p className="font-bold">Chưa có lịch thi nào.</p>
+         <p className="mt-1">Thêm một buổi loại “Thi” (có thể nhập thêm Ngày thi trong form) hoặc thêm một task loại “Thi” có ngày hết hạn — nó sẽ hiện ở đây với đếm ngược.</p>
+       </div>
+@@ -52,19 +53,19 @@ export function ExamList({ sessions, tasks, times, onSelectSession }) {
+           <button
+             key={`${e.kind}-${e.id}`}
+             onClick={() => e.kind === 'session' && onSelectSession?.(e.session)}
+-            className="flex w-full items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-left shadow-sm hover:bg-red-100/60"
++            className="flex w-full items-center gap-3 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60 p-4 text-left shadow-sm hover:bg-red-100/60"
+           >
+             <span className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-extrabold text-white">THI</span>
+             <span className="min-w-0 flex-1">
+-              <span className="block truncate text-sm font-bold text-red-900">{e.subject}</span>
+-              <span className="block text-xs text-red-700">
++              <span className="block truncate text-sm font-bold text-red-900 dark:text-red-100">{e.session ? `${iconFor(e.session)} ` : '📝 '}{e.subject}</span>
++              <span className="block text-xs text-red-700 dark:text-red-300">
+                 {label}
+                 {e.session?.room ? ` · Phòng ${e.session.room}` : ''}
+                 {e.session?.teacher ? ` · ${e.session.teacher}` : ''}
+               </span>
+             </span>
+             {e.date && (
+-              <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${overdue ? 'bg-red-600 text-white' : 'bg-white text-red-700'}`}>
++              <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${overdue ? 'bg-red-600 text-white' : 'bg-white dark:bg-slate-900 text-red-700 dark:text-red-300'}`}>
+                 {countdownLabel(e.date)}
+               </span>
+             )}
+diff --git a/src/components/Field.jsx b/src/components/Field.jsx
+index 1411d62..9e5ce59 100644
+--- a/src/components/Field.jsx
++++ b/src/components/Field.jsx
+@@ -1,7 +1,7 @@
+ export function Field({ label, children }) {
+   return (
+     <label className="block">
+-      <span className="mb-1 block text-xs font-bold text-slate-500">{label}</span>
++      <span className="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400">{label}</span>
+       {children}
+     </label>
+   )
+diff --git a/src/components/FreeTimeFinder.jsx b/src/components/FreeTimeFinder.jsx
+index 7b85b40..0ffd0b4 100644
+--- a/src/components/FreeTimeFinder.jsx
++++ b/src/components/FreeTimeFinder.jsx
+@@ -63,21 +63,21 @@ export function FreeTimeFinder({ mySessions, times }) {
+   }
+ 
+   return (
+-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
++    <section className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
+       <h2 className="text-lg font-extrabold">Tìm giờ trống chung</h2>
+-      <p className="mt-1 text-sm text-slate-500">
++      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+         Thêm lịch bận của bạn bè, app tìm khung giờ cả nhóm cùng rảnh để họp nhóm / học nhóm.
+         Chia sẻ bằng cách bạn xuất lịch (CSV/JSON/.ics) rồi Lộc nhập vào — chưa có lịch chung trực tuyến vì app không có backend.
+       </p>
+ 
+       <div className="mt-3 flex flex-wrap gap-2">
+         {friends.map((f) => (
+-          <span key={f.id} className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-800">
++          <span key={f.id} className="inline-flex items-center gap-2 rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1.5 text-sm font-semibold text-indigo-800 dark:text-indigo-200">
+             {f.name} · {f.sessions.length} buổi bận
+-            <button onClick={() => removeFriend(f.id)} aria-label={`Xóa ${f.name}`} className="font-bold text-indigo-400 hover:text-red-600">×</button>
++            <button onClick={() => removeFriend(f.id)} aria-label={`Xóa ${f.name}`} className="font-bold text-indigo-400 dark:text-indigo-300 hover:text-red-600">×</button>
+           </span>
+         ))}
+-        {friends.length === 0 && <span className="text-sm text-slate-400">Chưa có bạn nào — thêm bạn đầu tiên bên dưới.</span>}
++        {friends.length === 0 && <span className="text-sm text-slate-400 dark:text-slate-500">Chưa có bạn nào — thêm bạn đầu tiên bên dưới.</span>}
+       </div>
+ 
+       <div className="mt-3 grid gap-3 md:grid-cols-[1fr_2fr]">
+@@ -92,15 +92,15 @@ export function FreeTimeFinder({ mySessions, times }) {
+         />
+       </div>
+       <button onClick={addFriend} className="mt-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">+ Thêm bạn</button>
+-      {message && <p className="mt-2 text-sm text-slate-600">{message}</p>}
++      {message && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</p>}
+ 
+       <h3 className="mt-5 font-bold">Khung giờ trống dài nhất (≥ 2 tiết)</h3>
+       {topSlots.length === 0 ? (
+-        <p className="mt-1 text-sm text-slate-500">Không còn khung trống ≥ 2 tiết trong tuần — thử giảm buổi bận hoặc họp vào khung 1 tiết bên dưới.</p>
++        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Không còn khung trống ≥ 2 tiết trong tuần — thử giảm buổi bận hoặc họp vào khung 1 tiết bên dưới.</p>
+       ) : (
+         <ul className="mt-2 space-y-1.5">
+           {topSlots.slice(0, 5).map((s, i) => (
+-            <li key={i} className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
++            <li key={i} className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 px-3 py-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+               {DAY_NAMES[s.day]} · Tiết {s.start}-{s.end} ({timeRange(s.start, s.end, times)}) — trống {s.periods} tiết, cả nhóm rảnh
+             </li>
+           ))}
+@@ -110,12 +110,12 @@ export function FreeTimeFinder({ mySessions, times }) {
+       <h3 className="mt-5 font-bold">Giờ trống theo ngày</h3>
+       <div className="mt-2 grid gap-2 md:grid-cols-2">
+         {DAY_NAMES.map((d, day) => (
+-          <div key={d} className="rounded-xl border border-slate-100 p-3">
++          <div key={d} className="rounded-xl border border-slate-100 dark:border-slate-800 p-3">
+             <p className="text-sm font-bold">{d}</p>
+             {byDay[day].length === 0 ? (
+-              <p className="text-xs text-slate-400">Kín cả ngày.</p>
++              <p className="text-xs text-slate-400 dark:text-slate-500">Kín cả ngày.</p>
+             ) : (
+-              <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
++              <ul className="mt-1 space-y-0.5 text-xs text-slate-600 dark:text-slate-300">
+                 {byDay[day].map((s, i) => (
+                   <li key={i}>Tiết {s.start}-{s.end} ({timeRange(s.start, s.end, times)}) — trống {s.periods} tiết</li>
+                 ))}
+diff --git a/src/components/Header.jsx b/src/components/Header.jsx
+index bff84c5..3b86b4c 100644
+--- a/src/components/Header.jsx
++++ b/src/components/Header.jsx
+@@ -1,20 +1,24 @@
+-import { useEffect, useRef, useState } from 'react'
++import { useEffect, useRef } from 'react'
+ import { SEMESTERS } from '../data/seed.js'
+ import { PresetSettings } from './PresetSettings.jsx'
++import { ThemeSettings } from './ThemeSettings.jsx'
+ 
+-export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup, onImportJSON, onRestoreSeed, view, onViewChange, onExportIcs, onExportPng, preset, reminders, onReminderToggle, onReminderMinutes, onRequestPermission, install }) {
++// Header gọn: tiêu đề view hiện tại + chuyển học kỳ + nút sáng/tối + menu
++// Cài đặt. Logo và điều hướng chính đã chuyển sang Sidebar trái (desktop)
++// — header không còn giữ bản sao của chúng nữa. Menu Cài đặt được điều
++// khiển từ DashboardPage để mục "Cài đặt" ở sidebar mở được nó.
++export function Header({ semester, onSemesterChange, viewTitle, theme, settingsOpen, onSettingsOpenChange, onExportCSV, onExportBackup, onImportJSON, onRestoreSeed, onExportIcs, onExportPng, preset, reminders, onReminderToggle, onReminderMinutes, onRequestPermission, install }) {
+   const fileRef = useRef(null)
+-  const [settingsOpen, setSettingsOpen] = useState(false)
+   const menuRef = useRef(null)
+ 
+   // Đóng menu khi bấm ra ngoài hoặc bấm Esc.
+   useEffect(() => {
+     if (!settingsOpen) return
+     function onDocClick(e) {
+-      if (menuRef.current && !menuRef.current.contains(e.target)) setSettingsOpen(false)
++      if (menuRef.current && !menuRef.current.contains(e.target)) onSettingsOpenChange(false)
+     }
+     function onKey(e) {
+-      if (e.key === 'Escape') setSettingsOpen(false)
++      if (e.key === 'Escape') onSettingsOpenChange(false)
+     }
+     document.addEventListener('mousedown', onDocClick)
+     document.addEventListener('keydown', onKey)
+@@ -22,52 +26,33 @@ export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup
+       document.removeEventListener('mousedown', onDocClick)
+       document.removeEventListener('keydown', onKey)
+     }
+-  }, [settingsOpen])
++  }, [settingsOpen, onSettingsOpenChange])
+ 
+   function run(action) {
+     action()
+-    setSettingsOpen(false)
++    onSettingsOpenChange(false)
+   }
+ 
+   return (
+-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
++    <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 backdrop-blur">
+       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
+-        <div className="flex items-center gap-3">
+-          <img src="/logo.png" alt="SchedulingApp" className="h-10 w-10 rounded-xl object-cover" />
+-          <div>
+-            <h1 className="text-lg font-extrabold leading-tight">SchedulingApp</h1>
+-            <p className="text-xs text-slate-500">Xếp Lịch Học · Nguyễn Hữu Lộc · IUH</p>
+-          </div>
+-        </div>
++        <h1 className="text-lg font-extrabold leading-tight">{viewTitle}</h1>
++        <p className="hidden text-xs text-slate-500 dark:text-slate-400 sm:block">SchedulingApp · Nguyễn Hữu Lộc · IUH</p>
+         <div className="ml-auto flex flex-wrap items-center gap-2">
+-          {view && onViewChange && (
+-            <div className="flex rounded-lg bg-slate-100 p-1">
+-              <button
+-                onClick={() => onViewChange('schedule')}
+-                className={`rounded-md px-3 py-1.5 text-sm font-semibold ${view === 'schedule' ? 'bg-white shadow' : 'text-slate-600'}`}
+-              >
+-                Lịch học
+-              </button>
+-              <button
+-                onClick={() => onViewChange('simulator')}
+-                className={`rounded-md px-3 py-1.5 text-sm font-semibold ${view === 'simulator' ? 'bg-white shadow' : 'text-slate-600'}`}
+-              >
+-                Mô phỏng đăng ký
+-              </button>
+-              <button
+-                onClick={() => onViewChange('exams')}
+-                className={`rounded-md px-3 py-1.5 text-sm font-semibold ${view === 'exams' ? 'bg-red-600 text-white shadow' : 'text-red-600'}`}
+-              >
+-                Lịch thi
+-              </button>
+-            </div>
+-          )}
+-          <div className="flex rounded-lg bg-slate-100 p-1">
++          <button
++            onClick={theme.cycleMode}
++            title="Đổi sáng / tối / theo hệ thống"
++            aria-label="Đổi giao diện sáng tối"
++            className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
++          >
++            {theme.dark ? '🌙' : '☀️'}
++          </button>
++          <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
+             {SEMESTERS.map((s) => (
+               <button
+                 key={s.id}
+                 onClick={() => onSemesterChange(s.id)}
+-                className={`rounded-md px-3 py-1.5 text-sm font-semibold ${semester === s.id ? 'bg-white shadow' : 'text-slate-600'}`}
++                className={`rounded-md px-3 py-1.5 text-sm font-semibold ${semester === s.id ? 'bg-white dark:bg-slate-900 shadow' : 'text-slate-600 dark:text-slate-300'}`}
+               >
+                 {s.id === 'hk2' ? 'HK2 · Nháp' : 'HK1'}
+               </button>
+@@ -75,61 +60,62 @@ export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup
+           </div>
+           <div className="relative" ref={menuRef}>
+             <button
+-              onClick={() => setSettingsOpen((v) => !v)}
++              onClick={() => onSettingsOpenChange(!settingsOpen)}
+               aria-expanded={settingsOpen}
+               aria-haspopup="menu"
+-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
++              className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
+             >
+               ⚙️ Cài đặt
+             </button>
+             {settingsOpen && (
+-              <div role="menu" className="absolute right-0 z-40 mt-2 w-[calc(100vw-2rem)] max-w-xs rounded-2xl border border-slate-200 bg-white p-2 shadow-lg sm:w-80">
+-                <button onClick={() => run(onExportCSV)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50">
+-                  ⬇️ Xuất CSV <span className="block text-xs font-normal text-slate-500">Tải lịch học kỳ này về file CSV</span>
++              <div role="menu" className="absolute right-0 z-40 mt-2 max-h-[calc(100vh-5rem)] w-[calc(100vw-2rem)] max-w-xs overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 shadow-lg sm:w-80">
++                {theme && <ThemeSettings theme={theme} />}
++                <button onClick={() => run(onExportCSV)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
++                  ⬇️ Xuất CSV <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">Tải lịch học kỳ này về file CSV</span>
+                 </button>
+-                <button onClick={() => run(onExportBackup)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50">
+-                  💾 Backup JSON <span className="block text-xs font-normal text-slate-500">Sao lưu toàn bộ lịch để chuyển máy</span>
++                <button onClick={() => run(onExportBackup)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
++                  💾 Backup JSON <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">Sao lưu toàn bộ lịch để chuyển máy</span>
+                 </button>
+                 <button
+                   onClick={() => fileRef.current?.click()}
+-                  className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50"
++                  className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
+                 >
+-                  📂 Nhập JSON <span className="block text-xs font-normal text-slate-500">Khôi phục từ file backup JSON</span>
++                  📂 Nhập JSON <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">Khôi phục từ file backup JSON</span>
+                 </button>
+                 <button
+                   onClick={() => {
+-                    setSettingsOpen(false)
++                    onSettingsOpenChange(false)
+                     if (confirm('Khôi phục toàn bộ lịch gốc từ ảnh / Excel của Lộc? Các thay đổi của bạn sẽ mất.')) onRestoreSeed()
+                   }}
+-                  className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
++                  className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40"
+                 >
+-                  ↩️ Khôi phục gốc <span className="block text-xs font-normal text-red-400">Xóa hết thay đổi, về lại lịch gốc</span>
++                  ↩️ Khôi phục gốc <span className="block text-xs font-normal text-red-400 dark:text-red-300">Xóa hết thay đổi, về lại lịch gốc</span>
+                 </button>
+                 {onExportIcs && (
+-                  <button onClick={() => run(onExportIcs)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50">
+-                    📅 Xuất .ics (Google Calendar) <span className="block text-xs font-normal text-slate-500">Tải file .ics rồi import vào Google Calendar → Lịch → Cài đặt → Nhập &amp; xuất</span>
++                  <button onClick={() => run(onExportIcs)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
++                    📅 Xuất .ics (Google Calendar) <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">Tải file .ics rồi import vào Google Calendar → Lịch → Cài đặt → Nhập &amp; xuất</span>
+                   </button>
+                 )}
+                 {onExportPng && (
+-                  <button onClick={() => run(onExportPng)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50">
+-                    🖼️ Xuất ảnh PNG <span className="block text-xs font-normal text-slate-500">Tải lưới tuần thành ảnh để share nhóm</span>
++                  <button onClick={() => run(onExportPng)} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
++                    🖼️ Xuất ảnh PNG <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">Tải lưới tuần thành ảnh để share nhóm</span>
+                   </button>
+                 )}
+                 {preset && <PresetSettings preset={preset} />}
+                 {reminders && (
+-                  <div className="border-t border-slate-100 px-3 py-2">
++                  <div className="border-t border-slate-100 dark:border-slate-800 px-3 py-2">
+                     <p className="text-sm font-bold">🔔 Nhắc lịch</p>
+                     <label className="mt-1 flex items-center gap-2 text-sm">
+                       <input type="checkbox" checked={reminders.settings.enabled} onChange={onReminderToggle} className="h-4 w-4 accent-indigo-600" />
+                       Nhắc trước giờ học
+                     </label>
+-                    <div className="mt-1 flex items-center gap-2 text-sm text-slate-600">
++                    <div className="mt-1 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                       <span>Trước</span>
+                       <select
+                         value={reminders.settings.minutesBefore}
+                         disabled={!reminders.settings.enabled}
+                         onChange={(e) => onReminderMinutes(Number(e.target.value))}
+-                        className="rounded-lg border border-slate-300 px-2 py-1 text-sm"
++                        className="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm"
+                       >
+                         <option value={15}>15 phút</option>
+                         <option value={30}>30 phút</option>
+@@ -137,29 +123,29 @@ export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup
+                       <span>· thi/deadline nhắc trước 1 ngày</span>
+                     </div>
+                     {reminders.settings.enabled && reminders.permission !== 'granted' && (
+-                      <p className="mt-1 text-xs text-slate-500">
++                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                         {reminders.permission === 'unsupported'
+                           ? 'Trình duyệt này không hỗ trợ thông báo — banner trong app vẫn hiện.'
+                           : 'Thông báo trình duyệt chưa bật — banner trong app vẫn hiện. '}
+                         {reminders.permission === 'default' && (
+-                          <button onClick={onRequestPermission} className="font-bold text-indigo-700 underline">Bật thông báo</button>
++                          <button onClick={onRequestPermission} className="font-bold text-indigo-700 dark:text-indigo-300 underline">Bật thông báo</button>
+                         )}
+                       </p>
+                     )}
+                   </div>
+                 )}
+                 {install && (
+-                  <div className="border-t border-slate-100 px-3 py-2">
++                  <div className="border-t border-slate-100 dark:border-slate-800 px-3 py-2">
+                     {install.canInstall ? (
+                       <button onClick={() => run(install.promptInstall)} className="block w-full rounded-lg bg-indigo-600 px-3 py-2 text-left text-sm font-bold text-white">
+                         📲 Cài đặt app lên điện thoại
+                       </button>
+                     ) : (
+-                      <p className="text-xs text-slate-500">📲 Cài đặt app: mở menu trình duyệt → Thêm vào màn hình chính.</p>
++                      <p className="text-xs text-slate-500 dark:text-slate-400">📲 Cài đặt app: mở menu trình duyệt → Thêm vào màn hình chính.</p>
+                     )}
+                   </div>
+                 )}
+-                <p className="border-t border-slate-100 px-3 pt-2 text-xs text-slate-400">
++                <p className="border-t border-slate-100 dark:border-slate-800 px-3 pt-2 text-xs text-slate-400 dark:text-slate-500">
+                   Dữ liệu chỉ lưu trên trình duyệt này — Backup JSON trước khi đổi máy.
+                 </p>
+               </div>
+@@ -168,7 +154,7 @@ export function Header({ semester, onSemesterChange, onExportCSV, onExportBackup
+           <input ref={fileRef} type="file" accept="application/json" className="hidden"
+             onChange={(e) => {
+               const f = e.target.files?.[0]
+-              setSettingsOpen(false)
++              onSettingsOpenChange(false)
+               if (f) onImportJSON(f)
+               e.target.value = ''
+             }} />
+diff --git a/src/components/Modal.jsx b/src/components/Modal.jsx
+index 553fb70..77e4eb7 100644
+--- a/src/components/Modal.jsx
++++ b/src/components/Modal.jsx
+@@ -1,7 +1,7 @@
+ export function Modal({ children, onClose }) {
+   return (
+     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
+-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
++      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white dark:bg-slate-900 p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+         {children}
+       </div>
+     </div>
+diff --git a/src/components/PlanCompare.jsx b/src/components/PlanCompare.jsx
+index dc25b17..8f562e9 100644
+--- a/src/components/PlanCompare.jsx
++++ b/src/components/PlanCompare.jsx
+@@ -22,10 +22,10 @@ export function PlanCompare({ plans, activePlanId, onSelectPlan, onApplyPlan })
+   }
+ 
+   return (
+-    <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
++    <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
+       <table className="w-full min-w-[640px] text-sm">
+         <thead>
+-          <tr className="border-b border-slate-200 bg-slate-50 text-left">
++          <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-left">
+             <th className="px-4 py-3 font-bold">Tiêu chí</th>
+             {scored.map(({ plan }) => (
+               <th key={plan.id} className="px-4 py-3 font-bold">
+@@ -33,7 +33,7 @@ export function PlanCompare({ plans, activePlanId, onSelectPlan, onApplyPlan })
+                   {plan.name}
+                   {plan.id === activePlanId && ' ●'}
+                 </button>
+-                <span className="block text-xs font-normal text-slate-500">{plan.sessions.length} buổi</span>
++                <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">{plan.sessions.length} buổi</span>
+               </th>
+             ))}
+           </tr>
+@@ -42,12 +42,12 @@ export function PlanCompare({ plans, activePlanId, onSelectPlan, onApplyPlan })
+           {ROWS.map((row) => {
+             const best = bestValue(row)
+             return (
+-              <tr key={row.key} className="border-b border-slate-100">
++              <tr key={row.key} className="border-b border-slate-100 dark:border-slate-800">
+                 <td className="px-4 py-2.5 font-semibold">{row.label}</td>
+                 {scored.map(({ plan, ...s }) => (
+                   <td
+                     key={plan.id}
+-                    className={`px-4 py-2.5 ${s[row.key] === best ? 'bg-emerald-50 font-extrabold text-emerald-800' : ''}`}
++                    className={`px-4 py-2.5 ${s[row.key] === best ? 'bg-emerald-50 dark:bg-emerald-950/60 font-extrabold text-emerald-800 dark:text-emerald-200' : ''}`}
+                   >
+                     {s[row.key]}{row.suffix}
+                   </td>
+@@ -70,7 +70,7 @@ export function PlanCompare({ plans, activePlanId, onSelectPlan, onApplyPlan })
+           </tr>
+         </tbody>
+       </table>
+-      <p className="border-t border-slate-100 px-4 py-2 text-xs text-slate-500">
++      <p className="border-t border-slate-100 dark:border-slate-800 px-4 py-2 text-xs text-slate-500 dark:text-slate-400">
+         Điểm lịch đẹp = 100 − 20 × cặp trùng − 8 × (ngày lên trường vượt quá 3) − 3 × tiết buổi tối − 1 × tiết trống giữa các ca.
+         Ô xanh lá là giá trị tốt nhất trong hàng.
+       </p>
+diff --git a/src/components/PlanImport.jsx b/src/components/PlanImport.jsx
+index ba493ce..e2f24f1 100644
+--- a/src/components/PlanImport.jsx
++++ b/src/components/PlanImport.jsx
+@@ -53,9 +53,9 @@ export function PlanImport({ onImport }) {
+   }
+ 
+   return (
+-    <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
++    <div className="mt-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
+       <h3 className="font-extrabold">Nhập lớp vào phương án này</h3>
+-      <p className="mt-1 text-xs text-slate-500">
++      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+         Dán đoạn copy từ sv.iuh.edu.vn, dán nhanh, hoặc tải file CSV/TSV xuất từ Excel.
+         Chưa có OCR ảnh chụp — đó là bước sau.
+       </p>
+@@ -64,7 +64,7 @@ export function PlanImport({ onImport }) {
+           <button
+             key={t.id}
+             onClick={() => { setTab(t.id); setResult(null) }}
+-            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${tab === t.id ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-300'}`}
++            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${tab === t.id ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600'}`}
+           >
+             {t.label}
+           </button>
+@@ -74,7 +74,7 @@ export function PlanImport({ onImport }) {
+       {tab === 'file' ? (
+         <div className="mt-3">
+           <p className="text-sm font-semibold">File CSV / TSV / TXT — hàng đầu là tiêu đề cột (tùy chọn):</p>
+-          <code className="mt-1 block whitespace-pre-wrap rounded-lg bg-slate-100 px-3 py-2 text-xs">{EXAMPLES.file}</code>
++          <code className="mt-1 block whitespace-pre-wrap rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs">{EXAMPLES.file}</code>
+           <button
+             onClick={() => fileRef.current?.click()}
+             className="mt-3 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700"
+@@ -93,16 +93,16 @@ export function PlanImport({ onImport }) {
+               ? 'Dán nguyên đoạn copy từ trang Lịch học, lịch thi theo tuần của web trường — mỗi buổi một khối, cách nhau bằng dòng trống:'
+               : 'Dán mỗi buổi một dòng, theo mẫu:'}
+           </p>
+-          <code className="mt-1 block whitespace-pre-wrap rounded-lg bg-slate-100 px-3 py-2 text-xs">{EXAMPLES[tab]}</code>
++          <code className="mt-1 block whitespace-pre-wrap rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs">{EXAMPLES[tab]}</code>
+           {tab === 'iuh' && (
+-            <p className="mt-1 text-xs text-slate-500">
++            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+               Nhớ copy kèm dòng "Thứ X" cho mỗi buổi. Thiếu Thứ hoặc thiếu Tiết thì app không tự đoán — dòng đó sẽ báo lỗi để Lộc sửa lại.
+             </p>
+           )}
+           <textarea
+             value={text} onChange={(e) => setText(e.target.value)} rows={5}
+             placeholder="Dán lịch ở đây…"
+-            className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
++            className="mt-3 w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+           />
+           <button onClick={handleTextImport} className="mt-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">
+             Nhập vào phương án
+@@ -111,17 +111,17 @@ export function PlanImport({ onImport }) {
+       )}
+ 
+       {result && (
+-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
++        <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm">
+           <p>
+             Đã thêm <b>{result.added} buổi</b>
+-            {result.failed.length > 0 && <> · <b className="text-red-700">{result.failed.length} dòng lỗi</b></>}
++            {result.failed.length > 0 && <> · <b className="text-red-700 dark:text-red-300">{result.failed.length} dòng lỗi</b></>}
+           </p>
+           {result.failed.length > 0 && (
+-            <ul className="mt-1 list-disc pl-5 text-xs text-red-700">
++            <ul className="mt-1 list-disc pl-5 text-xs text-red-700 dark:text-red-300">
+               {result.failed.map((f, i) => (
+                 <li key={i}>
+                   {f.reason}
+-                  {f.line && <span className="text-slate-500"> — "{String(f.line).slice(0, 80)}{String(f.line).length > 80 ? '…' : ''}"</span>}
++                  {f.line && <span className="text-slate-500 dark:text-slate-400"> — "{String(f.line).slice(0, 80)}{String(f.line).length > 80 ? '…' : ''}"</span>}
+                 </li>
+               ))}
+             </ul>
+diff --git a/src/components/PresetSettings.jsx b/src/components/PresetSettings.jsx
+index 4c0b4e8..0ee0735 100644
+--- a/src/components/PresetSettings.jsx
++++ b/src/components/PresetSettings.jsx
+@@ -33,19 +33,19 @@ export function PresetSettings({ preset }) {
+   }
+ 
+   return (
+-    <div className="border-t border-slate-100 px-3 py-2">
++    <div className="border-t border-slate-100 dark:border-slate-800 px-3 py-2">
+       <p className="text-sm font-bold">🕐 Khung giờ tiết</p>
+       <select
+         value={preset.presetId}
+         onChange={(e) => { setDraft(null); setError(''); preset.setPreset(e.target.value) }}
+-        className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
++        className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
+       >
+         {preset.presets.map((p) => (
+           <option key={p.id} value={p.id}>{p.name}</option>
+         ))}
+         <option value="custom">Tùy chỉnh…</option>
+       </select>
+-      <p className="mt-1 text-xs text-slate-500">
++      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+         {preset.presetId === 'custom'
+           ? 'Đang dùng khung giờ tự chỉnh.'
+           : (preset.presets.find((p) => p.id === preset.presetId)?.note || '')}
+@@ -56,11 +56,11 @@ export function PresetSettings({ preset }) {
+           {rows.map((t, i) => {
+             const [s, e] = t.split(' - ')
+             return (
+-              <label key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
++              <label key={i} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                 <span className="w-10 shrink-0 font-bold">Tiết {i + 1}</span>
+-                <input type="time" value={s} onChange={(e) => setRow(i, 'start', e.target.value)} className="w-full rounded border border-slate-300 px-1 py-0.5" />
++                <input type="time" value={s} onChange={(e) => setRow(i, 'start', e.target.value)} className="w-full rounded border border-slate-300 dark:border-slate-600 px-1 py-0.5" />
+                 <span>–</span>
+-                <input type="time" value={e} onChange={(e) => setRow(i, 'end', e.target.value)} className="w-full rounded border border-slate-300 px-1 py-0.5" />
++                <input type="time" value={e} onChange={(e) => setRow(i, 'end', e.target.value)} className="w-full rounded border border-slate-300 dark:border-slate-600 px-1 py-0.5" />
+               </label>
+             )
+           })}
+@@ -69,15 +69,15 @@ export function PresetSettings({ preset }) {
+       {editing && (
+         <div className="mt-2 flex gap-2">
+           <button onClick={saveCustom} className="flex-1 rounded-lg bg-indigo-600 px-2 py-1.5 text-xs font-bold text-white">Lưu khung giờ</button>
+-          <button onClick={() => { setDraft(null); setError(''); preset.resetToIuh() }} className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold">Khôi phục IUH</button>
++          <button onClick={() => { setDraft(null); setError(''); preset.resetToIuh() }} className="rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-xs font-semibold">Khôi phục IUH</button>
+         </div>
+       )}
+       {!editing && (
+-        <button onClick={startEdit} className="mt-2 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-semibold hover:bg-slate-50">
++        <button onClick={startEdit} className="mt-2 w-full rounded-lg border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
+           Tự chỉnh từng tiết…
+         </button>
+       )}
+-      {error && <p className="mt-1 text-xs font-semibold text-red-600">{error}</p>}
++      {error && <p className="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">{error}</p>}
+     </div>
+   )
+ }
+diff --git a/src/components/QuickImportModal.jsx b/src/components/QuickImportModal.jsx
+index a1f5054..ee7c1fa 100644
+--- a/src/components/QuickImportModal.jsx
++++ b/src/components/QuickImportModal.jsx
+@@ -3,18 +3,18 @@
+ export function QuickImportModal({ open, pasteText, onPasteTextChange, pasteResult, onImport }) {
+   if (!open) return null
+   return (
+-    <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
++    <div className="mt-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
+       <p className="text-sm font-semibold">Dán mỗi buổi một dòng, theo mẫu:</p>
+-      <code className="mt-1 block rounded-lg bg-slate-100 px-3 py-2 text-xs">Tên môn | Thứ | Tiết bắt đầu-Tiết kết thúc | Phòng | GV</code>
+-      <p className="mt-1 text-xs text-slate-500">Ví dụ: Lập trình WWW (Java) | Thứ 2 | 7-9 | V7.01 | Đặng Thị Thu Hà</p>
++      <code className="mt-1 block rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs">Tên môn | Thứ | Tiết bắt đầu-Tiết kết thúc | Phòng | GV</code>
++      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Ví dụ: Lập trình WWW (Java) | Thứ 2 | 7-9 | V7.01 | Đặng Thị Thu Hà</p>
+       <textarea
+         value={pasteText} onChange={(e) => onPasteTextChange(e.target.value)} rows={4}
+         placeholder="Dán lịch ở đây…"
+-        className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
++        className="mt-3 w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+       />
+       <div className="mt-2 flex items-center gap-3">
+         <button onClick={onImport} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">Nhập vào lịch</button>
+-        {pasteResult && <span className="text-sm text-slate-600">{pasteResult}</span>}
++        {pasteResult && <span className="text-sm text-slate-600 dark:text-slate-300">{pasteResult}</span>}
+       </div>
+     </div>
+   )
+diff --git a/src/components/ReminderBanner.jsx b/src/components/ReminderBanner.jsx
+index cc3bb64..a4562c3 100644
+--- a/src/components/ReminderBanner.jsx
++++ b/src/components/ReminderBanner.jsx
+@@ -7,7 +7,7 @@ export function ReminderBanner({ banners, onDismiss }) {
+           <span className="mt-0.5">🔔</span>
+           <span className="min-w-0 flex-1">
+             <span className="block font-bold text-amber-900">{b.title}</span>
+-            {b.detail && <span className="block text-amber-800">{b.detail}</span>}
++            {b.detail && <span className="block text-amber-800 dark:text-amber-200">{b.detail}</span>}
+           </span>
+           <button onClick={() => onDismiss(b.id)} aria-label="Đóng nhắc nhở" className="font-bold text-amber-700">✕</button>
+         </div>
+diff --git a/src/components/Row.jsx b/src/components/Row.jsx
+index 5e4b4f9..fc4ac23 100644
+--- a/src/components/Row.jsx
++++ b/src/components/Row.jsx
+@@ -1,7 +1,7 @@
+ export function Row({ label, value }) {
+   return (
+     <div className="flex gap-3">
+-      <dt className="w-24 shrink-0 font-semibold text-slate-500">{label}</dt>
++      <dt className="w-24 shrink-0 font-semibold text-slate-500 dark:text-slate-400">{label}</dt>
+       <dd className="min-w-0 flex-1 font-medium">{value}</dd>
+     </div>
+   )
+diff --git a/src/components/SessionCard.jsx b/src/components/SessionCard.jsx
+index 46760d3..86c126d 100644
+--- a/src/components/SessionCard.jsx
++++ b/src/components/SessionCard.jsx
+@@ -1,9 +1,10 @@
+ import { colorFor, TYPE_STYLE } from '../lib/colors.js'
++import { iconFor } from '../lib/icons.js'
+ 
+ // Một khối môn trên lưới tuần (desktop). Đặt bằng gridColumn/gridRow
+ // theo thứ và khoảng tiết của buổi.
+-export function SessionCard({ session, isConflict, onSelect }) {
+-  const c = colorFor(session.subject)
++export function SessionCard({ session, isConflict, onSelect, dark = false }) {
++  const c = colorFor(session.subject, dark)
+   return (
+     <button
+       onClick={() => onSelect(session)}
+@@ -17,7 +18,7 @@ export function SessionCard({ session, isConflict, onSelect }) {
+       }}
+     >
+       <span className="block text-xs font-bold leading-tight" style={{ color: c.text }}>
+-        {isConflict ? '⚠️ ' : ''}{session.subject}
++        {isConflict ? '⚠️ ' : ''}{iconFor(session)} {session.subject}
+       </span>
+       <span className="mt-0.5 block text-[11px] leading-tight" style={{ color: c.text }}>
+         Tiết {session.start}-{session.end}{session.room ? ` · ${session.room}` : ''}
+diff --git a/src/components/SessionDetailModal.jsx b/src/components/SessionDetailModal.jsx
+index e1a1709..c270d99 100644
+--- a/src/components/SessionDetailModal.jsx
++++ b/src/components/SessionDetailModal.jsx
+@@ -1,5 +1,6 @@
+ import { DAY_NAMES, sessionLabel, timeRange } from '../lib/time.js'
+ import { TYPE_STYLE } from '../lib/colors.js'
++import { iconFor } from '../lib/icons.js'
+ import { Modal } from './Modal.jsx'
+ import { Row } from './Row.jsx'
+ 
+@@ -8,7 +9,7 @@ export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDel
+   return (
+     <Modal onClose={onClose}>
+       <div className="flex items-start justify-between gap-3">
+-        <h3 className="text-lg font-extrabold leading-snug">{session.subject}</h3>
++        <h3 className="text-lg font-extrabold leading-snug">{iconFor(session)} {session.subject}</h3>
+         <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${TYPE_STYLE[session.type]}`}>{session.type}</span>
+       </div>
+       <dl className="mt-4 space-y-2 text-sm">
+@@ -24,15 +25,15 @@ export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDel
+         {session.note && <Row label="Ghi chú" value={session.note} />}
+       </dl>
+       {isConflict && (
+-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">⚠️ Buổi này đang trùng tiết với một buổi khác cùng ngày — kiểm tra lại với web trường.</p>
++        <p className="mt-3 rounded-lg bg-red-50 dark:bg-red-950/60 px-3 py-2 text-sm font-semibold text-red-700 dark:text-red-300">⚠️ Buổi này đang trùng tiết với một buổi khác cùng ngày — kiểm tra lại với web trường.</p>
+       )}
+       <div className="mt-5 flex flex-wrap gap-2">
+         <button onClick={onEdit} className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Sửa</button>
+         {onAddTask && (
+-          <button onClick={onAddTask} className="flex-1 rounded-xl border border-indigo-300 px-4 py-2 text-sm font-bold text-indigo-700">＋ Thêm task cho môn này</button>
++          <button onClick={onAddTask} className="flex-1 rounded-xl border border-indigo-300 dark:border-indigo-600 px-4 py-2 text-sm font-bold text-indigo-700 dark:text-indigo-300">＋ Thêm task cho môn này</button>
+         )}
+-        <button onClick={onDelete} className="rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-600">Xóa</button>
+-        <button onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Đóng</button>
++        <button onClick={onDelete} className="rounded-xl border border-red-300 dark:border-red-700 px-4 py-2 text-sm font-bold text-red-600 dark:text-red-400">Xóa</button>
++        <button onClick={onClose} className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold">Đóng</button>
+       </div>
+     </Modal>
+   )
+diff --git a/src/components/SessionFormModal.jsx b/src/components/SessionFormModal.jsx
+index 4920601..671f6b8 100644
+--- a/src/components/SessionFormModal.jsx
++++ b/src/components/SessionFormModal.jsx
+@@ -1,4 +1,5 @@
+ import { DAY_NAMES, PERIOD_TIMES, TYPES, sessionLabel, timeRange } from '../lib/time.js'
++import { ICON_OPTIONS } from '../lib/icons.js'
+ import { Modal } from './Modal.jsx'
+ import { Field } from './Field.jsx'
+ 
+@@ -39,14 +40,14 @@ export function SessionFormModal({ form, onFormChange, formConflicts, onClose, o
+             </select>
+           </Field>
+         </div>
+-        <p className="text-xs text-slate-500">Giờ: {timeRange(Number(form.start), Number(form.end), times)} · Ca {sessionLabel(Number(form.start))}</p>
++        <p className="text-xs text-slate-500 dark:text-slate-400">Giờ: {timeRange(Number(form.start), Number(form.end), times)} · Ca {sessionLabel(Number(form.start))}</p>
+         {form.type === 'Thi' && (
+           <Field label="Ngày thi (không bắt buộc)">
+             <input type="date" value={form.examDate || ''} onChange={(e) => onFormChange({ ...form, examDate: e.target.value })} className="input" />
+           </Field>
+         )}
+         {formConflicts.length > 0 && (
+-          <div className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
++          <div className="rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/60 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+             <b>⚠️ Trùng tiết với:</b>
+             <ul className="list-disc pl-5">
+               {formConflicts.map((s) => <li key={s.id}>{s.subject} — tiết {s.start}-{s.end}{s.room ? ` · ${s.room}` : ''}</li>)}
+@@ -63,10 +64,31 @@ export function SessionFormModal({ form, onFormChange, formConflicts, onClose, o
+             {TYPES.map((t) => <option key={t}>{t}</option>)}
+           </select>
+         </Field>
++        <Field label="Icon trang trí (không bắt buộc — để trống thì dùng icon mặc định theo loại)">
++          <div className="flex flex-wrap gap-1.5">
++            {ICON_OPTIONS.map((o) => (
++              <button
++                key={o.emoji || 'none'}
++                type="button"
++                title={o.label}
++                aria-label={`Icon: ${o.label}`}
++                aria-pressed={(form.icon || '') === o.emoji}
++                onClick={() => onFormChange({ ...form, icon: o.emoji })}
++                className={`rounded-lg border px-2 py-1.5 text-lg leading-none ${
++                  (form.icon || '') === o.emoji
++                    ? 'border-indigo-600 bg-indigo-600 text-white ring-1 ring-indigo-600'
++                    : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
++                }`}
++              >
++                {o.emoji || '—'}
++              </button>
++            ))}
++          </div>
++        </Field>
+         <Field label="Ghi chú"><input value={form.note} onChange={(e) => onFormChange({ ...form, note: e.target.value })} placeholder="VD: Team code: 27adb02" className="input" /></Field>
+         <div className="flex gap-2 pt-1">
+           <button type="submit" className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Lưu</button>
+-          <button type="button" onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Hủy</button>
++          <button type="button" onClick={onClose} className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold">Hủy</button>
+         </div>
+       </form>
+     </Modal>
+diff --git a/src/components/Sidebar.jsx b/src/components/Sidebar.jsx
+new file mode 100644
+index 0000000..a720c24
+--- /dev/null
++++ b/src/components/Sidebar.jsx
+@@ -0,0 +1,124 @@
++import { useEffect, useState } from 'react'
++
++export const SIDEBAR_KEY = 'schedulingapp-sidebar-v1'
++
++export const NAV_ITEMS = [
++  { id: 'schedule', label: 'Lịch học', icon: '📅' },
++  { id: 'exams', label: 'Lịch thi', icon: '📝' },
++  { id: 'simulator', label: 'Mô phỏng đăng ký', icon: '🧪' },
++  { id: 'freetime', label: 'Giờ trống chung', icon: '👥' },
++  { id: 'tasks', label: 'Task & Deadline', icon: '✅' },
++]
++
++function loadCollapsed() {
++  try { return localStorage.getItem(SIDEBAR_KEY) === 'collapsed' } catch { return false }
++}
++
++// Sidebar trái (desktop): logo + điều hướng chính của app. Thu gọn được
++// về dạng chỉ icon (nhớ lựa chọn ở localStorage). Trên mobile (<md) không
++// dùng sidebar dọc — DashboardPage vẽ thanh tab ngang thay thế.
++export function Sidebar({ view, onViewChange, semester, onSemesterChange, theme, onOpenSettings, collapsed, onToggleCollapsed }) {
++  return (
++    <aside
++      className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-slate-200 bg-white/95 backdrop-blur md:flex dark:border-slate-700 dark:bg-slate-900/95 ${
++        collapsed ? 'w-16' : 'w-60'
++      }`}
++    >
++      <div className={`flex items-center gap-3 border-b border-slate-200 px-3 py-3 dark:border-slate-700 ${collapsed ? 'justify-center px-2' : ''}`}>
++        <img src="/logo.png" alt="SchedulingApp" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
++        {!collapsed && (
++          <div className="min-w-0">
++            <p className="truncate text-base font-extrabold leading-tight">SchedulingApp</p>
++            <p className="truncate text-xs text-slate-500 dark:text-slate-400">Xếp Lịch Học · IUH</p>
++          </div>
++        )}
++      </div>
++
++      <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
++        {NAV_ITEMS.map((item) => {
++          const active = view === item.id
++          return (
++            <button
++              key={item.id}
++              onClick={() => onViewChange(item.id)}
++              title={collapsed ? item.label : undefined}
++              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold ${
++                active
++                  ? 'bg-indigo-600 text-white shadow'
++                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
++              } ${collapsed ? 'justify-center px-2' : ''}`}
++            >
++              <span className="text-lg leading-none">{item.icon}</span>
++              {!collapsed && <span className="truncate text-left">{item.label}</span>}
++            </button>
++          )
++        })}
++        <button
++          onClick={onOpenSettings}
++          title={collapsed ? 'Cài đặt' : undefined}
++          className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 ${collapsed ? 'justify-center px-2' : ''}`}
++        >
++          <span className="text-lg leading-none">⚙️</span>
++          {!collapsed && <span className="truncate text-left">Cài đặt</span>}
++        </button>
++      </nav>
++
++      <div className="space-y-2 border-t border-slate-200 px-2 py-3 dark:border-slate-700">
++        {!collapsed ? (
++          <>
++            <div className="flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
++              {[{ id: 'hk1', label: 'HK1' }, { id: 'hk2', label: 'HK2 · Nháp' }].map((s) => (
++                <button
++                  key={s.id}
++                  onClick={() => onSemesterChange(s.id)}
++                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-bold ${semester === s.id ? 'bg-white shadow dark:bg-slate-900' : 'text-slate-600 dark:text-slate-300'}`}
++                >
++                  {s.label}
++                </button>
++              ))}
++            </div>
++            <button
++              onClick={theme.cycleMode}
++              className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-bold hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
++              title="Đổi sáng / tối / theo hệ thống"
++            >
++              {theme.dark ? '🌙 Tối' : '☀️ Sáng'} · {theme.mode === 'system' ? 'theo hệ thống' : theme.mode === 'dark' ? 'tối' : 'sáng'}
++            </button>
++          </>
++        ) : (
++          <>
++            <button
++              onClick={() => onSemesterChange(semester === 'hk1' ? 'hk2' : 'hk1')}
++              title={`Học kỳ: ${semester === 'hk1' ? 'HK1' : 'HK2 · Nháp'} — bấm để đổi`}
++              className="flex w-full items-center justify-center rounded-lg bg-slate-100 py-2 text-xs font-bold dark:bg-slate-800"
++            >
++              {semester === 'hk1' ? 'HK1' : 'HK2'}
++            </button>
++            <button
++              onClick={theme.cycleMode}
++              title="Đổi sáng / tối / theo hệ thống"
++              className="flex w-full items-center justify-center rounded-lg border border-slate-300 py-2 text-base dark:border-slate-600"
++            >
++              {theme.dark ? '🌙' : '☀️'}
++            </button>
++          </>
++        )}
++        <button
++          onClick={onToggleCollapsed}
++          title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
++          className="flex w-full items-center justify-center rounded-lg py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
++        >
++          {collapsed ? '»' : '« Thu gọn'}
++        </button>
++      </div>
++    </aside>
++  )
++}
++
++export function useSidebarCollapsed() {
++  const [collapsed, setCollapsed] = useState(loadCollapsed)
++  useEffect(() => {
++    try { localStorage.setItem(SIDEBAR_KEY, collapsed ? 'collapsed' : 'open') } catch { /* bỏ qua */ }
++  }, [collapsed])
++  return [collapsed, () => setCollapsed((v) => !v)]
++}
+diff --git a/src/components/StatsBar.jsx b/src/components/StatsBar.jsx
+index dadafa9..8060132 100644
+--- a/src/components/StatsBar.jsx
++++ b/src/components/StatsBar.jsx
+@@ -7,9 +7,9 @@ export function StatsBar({ stats }) {
+         { label: 'Ngày học / tuần', value: stats.days },
+         { label: 'Tiết / tuần', value: stats.periods },
+       ].map((c) => (
+-        <div key={c.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+-          <div className="text-2xl font-extrabold text-indigo-700">{c.value}</div>
+-          <div className="text-sm text-slate-500">{c.label}</div>
++        <div key={c.label} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
++          <div className="text-2xl font-extrabold text-indigo-700 dark:text-indigo-300">{c.value}</div>
++          <div className="text-sm text-slate-500 dark:text-slate-400">{c.label}</div>
+         </div>
+       ))}
+     </div>
+diff --git a/src/components/TasksPanel.jsx b/src/components/TasksPanel.jsx
+index cf63363..fa5861d 100644
+--- a/src/components/TasksPanel.jsx
++++ b/src/components/TasksPanel.jsx
+@@ -62,14 +62,14 @@ export function TasksPanel({ tasks, subjects, onAdd, onToggleDone, onDelete, pre
+   }
+ 
+   return (
+-    <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
++    <section className="mt-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
+       <div className="flex flex-wrap items-baseline gap-2">
+         <h2 className="font-bold">Task &amp; deadline</h2>
+-        <span className="text-sm text-slate-500">{openCount} chưa xong</span>
++        <span className="text-sm text-slate-500 dark:text-slate-400">{openCount} chưa xong</span>
+       </div>
+ 
+       {nearestExam && (
+-        <p className="mt-2 rounded-xl bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-800">
++        <p className="mt-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 px-3 py-2 text-sm font-semibold text-indigo-800 dark:text-indigo-200">
+           🎯 Kỳ thi gần nhất: {nearestExam.title}
+           {nearestExam.subject ? ` — ${nearestExam.subject}` : ''} · {countdownLabel(nearestExam.dueDate)}
+           {` (${nearestExam.dueDate})`}
+@@ -80,27 +80,27 @@ export function TasksPanel({ tasks, subjects, onAdd, onToggleDone, onDelete, pre
+         <input
+           value={title} onChange={(e) => setTitle(e.target.value)}
+           placeholder="Tên task — VD: Nộp bài tập tuần 5"
+-          className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
++          className="rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
+         />
+         <input
+           value={subject} onChange={(e) => setSubject(e.target.value)}
+           placeholder="Môn" list="task-subjects"
+-          className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
++          className="rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
+         />
+         <datalist id="task-subjects">
+           {subjects.map((s) => <option key={s} value={s} />)}
+         </datalist>
+-        <select value={type} onChange={(e) => setType(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm">
++        <select value={type} onChange={(e) => setType(e.target.value)} className="rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm">
+           {TASK_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+         </select>
+         <input
+           type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
+-          className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
++          className="rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
+           aria-label="Ngày hết hạn"
+         />
+         <button type="submit" className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">+ Thêm</button>
+       </form>
+-      {formError && <p className="mt-1 text-sm font-semibold text-red-600">{formError}</p>}
++      {formError && <p className="mt-1 text-sm font-semibold text-red-600 dark:text-red-400">{formError}</p>}
+ 
+       <div className="mt-3 flex gap-2">
+         {[
+@@ -110,7 +110,7 @@ export function TasksPanel({ tasks, subjects, onAdd, onToggleDone, onDelete, pre
+         ].map(([v, label]) => (
+           <button
+             key={v} onClick={() => setFilter(v)}
+-            className={`rounded-full px-3 py-1 text-xs font-bold ${filter === v ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}
++            className={`rounded-full px-3 py-1 text-xs font-bold ${filter === v ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
+           >
+             {label}
+           </button>
+@@ -118,31 +118,31 @@ export function TasksPanel({ tasks, subjects, onAdd, onToggleDone, onDelete, pre
+       </div>
+ 
+       {visible.length === 0 ? (
+-        <p className="mt-3 text-sm text-slate-500">Chưa có task — thêm task đầu tiên cho môn của bạn.</p>
++        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Chưa có task — thêm task đầu tiên cho môn của bạn.</p>
+       ) : (
+         <ul className="mt-3 space-y-2">
+           {visible.map((t) => {
+             const overdue = !t.done && t.dueDate && daysUntil(t.dueDate) < 0
+             return (
+-              <li key={t.id} className="flex items-center gap-3 rounded-xl border border-slate-100 px-3 py-2">
++              <li key={t.id} className="flex items-center gap-3 rounded-xl border border-slate-100 dark:border-slate-800 px-3 py-2">
+                 <input
+                   type="checkbox" checked={t.done} onChange={() => onToggleDone(t.id)}
+                   aria-label={`Đánh dấu xong: ${t.title}`} className="h-4 w-4 accent-indigo-600"
+                 />
+                 <span className="min-w-0 flex-1">
+-                  <span className={`block truncate text-sm font-semibold ${t.done ? 'text-slate-400 line-through' : ''}`}>
++                  <span className={`block truncate text-sm font-semibold ${t.done ? 'text-slate-400 dark:text-slate-500 line-through' : ''}`}>
+                     {t.title}
+                   </span>
+-                  <span className="block text-xs text-slate-500">
++                  <span className="block text-xs text-slate-500 dark:text-slate-400">
+                     {t.type}{t.subject ? ` · ${t.subject}` : ''}
+                     {t.dueDate && (
+-                      <span className={overdue ? ' font-bold text-red-600' : ' font-semibold text-indigo-700'}>
++                      <span className={overdue ? ' font-bold text-red-600 dark:text-red-400' : ' font-semibold text-indigo-700 dark:text-indigo-300'}>
+                         {` · ${countdownLabel(t.dueDate)} (${t.dueDate})`}
+                       </span>
+                     )}
+                   </span>
+                 </span>
+-                <button onClick={() => { if (confirm(`Xóa task "${t.title}"?`)) onDelete(t.id) }} className="text-xs font-bold text-red-600">Xóa</button>
++                <button onClick={() => { if (confirm(`Xóa task "${t.title}"?`)) onDelete(t.id) }} className="text-xs font-bold text-red-600 dark:text-red-400">Xóa</button>
+               </li>
+             )
+           })}
+diff --git a/src/components/ThemeSettings.jsx b/src/components/ThemeSettings.jsx
+new file mode 100644
+index 0000000..778d88b
+--- /dev/null
++++ b/src/components/ThemeSettings.jsx
+@@ -0,0 +1,70 @@
++import { BACKGROUND_OPTIONS, THEME_MODES, backgroundStyle } from '../lib/theme.js'
++
++// Mục "Giao diện" trong menu Cài đặt: chế độ sáng/tối + nền dashboard.
++// Bản xem trước nền dùng gradient thật (bản sáng) để Lộc thấy trước khi chọn.
++export function ThemeSettings({ theme }) {
++  return (
++    <div className="border-t border-slate-100 px-3 py-2 dark:border-slate-700">
++      <p className="text-sm font-bold">🎨 Giao diện</p>
++      <div className="mt-1 flex gap-1">
++        {THEME_MODES.map((m) => (
++          <button
++            key={m.id}
++            onClick={() => theme.setMode(m.id)}
++            className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-bold ${
++              theme.mode === m.id
++                ? 'border-indigo-600 bg-indigo-600 text-white'
++                : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
++            }`}
++          >
++            {m.label}
++          </button>
++        ))}
++      </div>
++      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
++        {theme.mode === 'system' ? 'Đang theo giao diện hệ thống (sáng/tối theo máy).' : theme.mode === 'dark' ? 'Đang dùng giao diện tối.' : 'Đang dùng giao diện sáng.'}
++      </p>
++
++      <p className="mt-3 text-sm font-bold">🖼️ Nền dashboard</p>
++      <div className="mt-1 grid grid-cols-2 gap-1.5">
++        {BACKGROUND_OPTIONS.map((b) => (
++          <button
++            key={b.id}
++            onClick={() => theme.setBackground(b.id)}
++            className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left text-xs font-semibold ${
++              theme.background === b.id
++                ? 'border-indigo-600 ring-1 ring-indigo-600'
++                : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
++            }`}
++          >
++            <span
++              className="h-5 w-5 shrink-0 rounded-md border border-slate-300 dark:border-slate-600"
++              style={{ background: backgroundStyle(b.id, theme.customColor, false) }}
++            />
++            {b.label}
++          </button>
++        ))}
++      </div>
++      {theme.background === 'custom' && (
++        <div className="mt-2 flex items-center gap-2">
++          <input
++            type="color"
++            value={theme.customColor}
++            onChange={(e) => theme.setCustomColor(e.target.value)}
++            aria-label="Chọn màu nền"
++            className="h-8 w-10 shrink-0 cursor-pointer rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
++          />
++          <input
++            value={theme.customColor}
++            onChange={(e) => { const v = e.target.value; if (/^#[0-9a-fA-F]{6}$/.test(v)) theme.setCustomColor(v) }}
++            aria-label="Mã màu hex"
++            className="input w-28 py-1 text-xs"
++            style={{ width: '7rem' }}
++            placeholder="#4f46e5"
++          />
++          <span className="text-xs text-slate-500 dark:text-slate-400">Nhập mã hex hoặc bấm ô màu.</span>
++        </div>
++      )}
++    </div>
++  )
++}
+diff --git a/src/components/TodayTomorrow.jsx b/src/components/TodayTomorrow.jsx
+index 7ccae9e..65d8be2 100644
+--- a/src/components/TodayTomorrow.jsx
++++ b/src/components/TodayTomorrow.jsx
+@@ -1,6 +1,7 @@
+ import { useEffect, useState } from 'react'
+ import { DAY_NAMES, timeRange, sessionStatusToday, inMinutesLabel, nextOccurrence } from '../lib/time.js'
+ import { colorFor } from '../lib/colors.js'
++import { iconFor } from '../lib/icons.js'
+ 
+ function statusLabel(session, now, times) {
+   const status = sessionStatusToday(session, now, times)
+@@ -17,7 +18,7 @@ function statusLabel(session, now, times) {
+  * Widget "Hôm nay học gì": thẻ Hôm nay lên đầu dashboard, mỗi buổi kèm
+  * đếm ngược / trạng thái Đang học / Đã xong; thẻ Ngày mai gọn bên cạnh.
+  */
+-export function TodayTomorrow({ today, tomorrow, daySessions, conflicts, onSelect, times }) {
++export function TodayTomorrow({ today, tomorrow, daySessions, conflicts, onSelect, times, dark = false }) {
+   const [now, setNow] = useState(() => new Date())
+   useEffect(() => {
+     const id = setInterval(() => setNow(new Date()), 30000)
+@@ -27,31 +28,31 @@ export function TodayTomorrow({ today, tomorrow, daySessions, conflicts, onSelec
+   return (
+     <div className="mt-5 grid gap-3 md:grid-cols-2">
+       {[{ d: today, label: 'Hôm nay học gì' }, { d: tomorrow, label: 'Ngày mai' }].map(({ d, label }) => (
+-        <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
++        <div key={label} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
+           <h2 className="font-bold">{label} — {DAY_NAMES[d]}</h2>
+           {daySessions(d).length === 0 ? (
+-            <p className="mt-2 text-sm text-slate-500">Không có buổi học.</p>
++            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Không có buổi học.</p>
+           ) : (
+             <ul className="mt-2 space-y-2">
+               {daySessions(d).map((s) => {
+-                const c = colorFor(s.subject)
++                const c = colorFor(s.subject, dark)
+                 const status = d === today ? statusLabel(s, now, times) : ''
+                 const ongoing = d === today && sessionStatusToday(s, now, times) === 'ongoing'
+                 const done = d === today && sessionStatusToday(s, now, times) === 'done'
+                 return (
+                   <li key={s.id}>
+-                    <button onClick={() => onSelect(s)} className="flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2 text-left hover:bg-slate-50">
++                    <button onClick={() => onSelect(s)} className="flex w-full items-center gap-3 rounded-xl border border-slate-100 dark:border-slate-800 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800">
+                       <span className="h-9 w-1.5 shrink-0 rounded-full" style={{ background: c.border }} />
+                       <span className="min-w-0 flex-1">
+-                        <span className="block truncate text-sm font-semibold">{s.subject}</span>
+-                        <span className="block text-xs text-slate-500">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end, times)}{s.room ? ` · ${s.room}` : ''}</span>
++                        <span className="block truncate text-sm font-semibold">{iconFor(s)} {s.subject}</span>
++                        <span className="block text-xs text-slate-500 dark:text-slate-400">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end, times)}{s.room ? ` · ${s.room}` : ''}</span>
+                         {status && (
+-                          <span className={`block text-xs font-semibold ${ongoing ? 'text-emerald-600' : done ? 'text-slate-400' : 'text-indigo-700'}`}>
++                          <span className={`block text-xs font-semibold ${ongoing ? 'text-emerald-600 dark:text-emerald-400' : done ? 'text-slate-400 dark:text-slate-500' : 'text-indigo-700 dark:text-indigo-300'}`}>
+                             {status}
+                           </span>
+                         )}
+                       </span>
+-                      {conflicts.has(s.id) && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">Trùng</span>}
++                      {conflicts.has(s.id) && <span className="rounded bg-red-100 dark:bg-red-900/60 px-2 py-0.5 text-xs font-bold text-red-700 dark:text-red-300">Trùng</span>}
+                     </button>
+                   </li>
+                 )
+diff --git a/src/components/Toolbar.jsx b/src/components/Toolbar.jsx
+index f208466..17d9c78 100644
+--- a/src/components/Toolbar.jsx
++++ b/src/components/Toolbar.jsx
+@@ -6,18 +6,18 @@ export function Toolbar({ search, onSearchChange, filterType, onFilterChange, on
+       <input
+         value={search} onChange={(e) => onSearchChange(e.target.value)}
+         placeholder="Tìm môn, giảng viên, phòng, mã LHP…"
+-        className="min-w-[220px] flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500"
++        className="min-w-[220px] flex-1 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+       />
+       <div className="flex flex-wrap gap-1.5">
+         {['Tất cả', ...TYPES].map((t) => (
+           <button key={t} onClick={() => onFilterChange(t)}
+-            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${filterType === t ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-300'}`}>
++            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${filterType === t ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600'}`}>
+             {t}
+           </button>
+         ))}
+       </div>
+       <button onClick={onAdd} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">+ Thêm buổi</button>
+-      <button onClick={onTogglePaste} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50">
++      <button onClick={onTogglePaste} className="rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
+         {pasteOpen ? 'Ẩn nhập nhanh' : '⌨️ Nhập nhanh (dán)'}
+       </button>
+     </div>
+diff --git a/src/components/WeekGrid.jsx b/src/components/WeekGrid.jsx
+index ab344d9..81da694 100644
+--- a/src/components/WeekGrid.jsx
++++ b/src/components/WeekGrid.jsx
+@@ -1,31 +1,32 @@
+ import { DAY_NAMES, DAY_SHORT, PERIOD_TIMES, timeRange } from '../lib/time.js'
+ import { colorFor } from '../lib/colors.js'
++import { iconFor } from '../lib/icons.js'
+ import { SessionCard } from './SessionCard.jsx'
+ 
+ export function WeekGrid({
+   sessions, filteredIds, conflicts, today,
+   mobileDay, onMobileDayChange,
+-  daySessions, onSelect, onEmptyCell, times = PERIOD_TIMES,
++  daySessions, onSelect, onEmptyCell, times = PERIOD_TIMES, dark = false,
+ }) {
+   const PERIOD_TIMES = times
+   return (
+     <>
+       {/* Lưới tuần — desktop */}
+-      <div className="timetable-scroll mt-5 hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:block">
++      <div className="timetable-scroll mt-5 hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 shadow-sm md:block">
+         <div
+           className="grid min-w-[920px]"
+           style={{ gridTemplateColumns: '76px repeat(7, minmax(0, 1fr))', gridTemplateRows: '42px repeat(16, 56px)' }}
+         >
+-          <div className="flex items-center justify-center border-b border-slate-200 text-xs font-bold text-slate-500">Ca / Tiết</div>
++          <div className="flex items-center justify-center border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 dark:text-slate-400">Ca / Tiết</div>
+           {DAY_NAMES.map((d, i) => (
+-            <div key={d} className={`flex items-center justify-center border-b border-slate-200 text-sm font-bold ${i === today ? 'text-indigo-700' : ''}`}>
++            <div key={d} className={`flex items-center justify-center border-b border-slate-200 dark:border-slate-700 text-sm font-bold ${i === today ? 'text-indigo-700 dark:text-indigo-300' : ''}`}>
+               {d}{i === today ? ' •' : ''}
+             </div>
+           ))}
+           {PERIOD_TIMES.map((t, p) => (
+-            <div key={p} className="flex flex-col items-center justify-center border-b border-slate-100 text-center">
+-              <span className="text-[11px] font-bold text-slate-600">T{p + 1}{p === 0 ? ' · Sáng' : p === 6 ? ' · Chiều' : p === 12 ? ' · Tối' : ''}</span>
+-              <span className="text-[10px] text-slate-400">{t}</span>
++            <div key={p} className="flex flex-col items-center justify-center border-b border-slate-100 dark:border-slate-800 text-center">
++              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">T{p + 1}{p === 0 ? ' · Sáng' : p === 6 ? ' · Chiều' : p === 12 ? ' · Tối' : ''}</span>
++              <span className="text-[10px] text-slate-400 dark:text-slate-500">{t}</span>
+             </div>
+           ))}
+           {DAY_NAMES.map((_, day) =>
+@@ -34,13 +35,13 @@ export function WeekGrid({
+                 key={`${day}-${p}`}
+                 onClick={() => onEmptyCell(day, p + 1)}
+                 title={`${DAY_NAMES[day]} tiết ${p + 1} — bấm để thêm buổi`}
+-                className="cursor-pointer border-b border-r border-slate-100 hover:bg-indigo-50/50"
++                className="cursor-pointer border-b border-r border-slate-100 dark:border-slate-800 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/40"
+                 style={{ gridColumn: day + 2, gridRow: p + 2 }}
+               />
+             )),
+           )}
+           {sessions.filter((s) => filteredIds.has(s.id)).map((s) => (
+-            <SessionCard key={s.id} session={s} isConflict={conflicts.has(s.id)} onSelect={onSelect} />
++            <SessionCard key={s.id} session={s} isConflict={conflicts.has(s.id)} onSelect={onSelect} dark={dark} />
+           ))}
+         </div>
+       </div>
+@@ -50,26 +51,26 @@ export function WeekGrid({
+         <div className="flex gap-1.5 overflow-x-auto pb-1">
+           {DAY_SHORT.map((d, i) => (
+             <button key={d} onClick={() => onMobileDayChange(i)}
+-              className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-bold ${mobileDay === i ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-300'}`}>
++              className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-bold ${mobileDay === i ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600'}`}>
+               {d}
+             </button>
+           ))}
+         </div>
+         <div className="mt-3 space-y-2">
+           {daySessions(mobileDay).filter((s) => filteredIds.has(s.id)).length === 0 && (
+-            <p className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">Không có buổi nào trong ngày này (theo bộ lọc hiện tại).</p>
++            <p className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-sm text-slate-500 dark:text-slate-400">Không có buổi nào trong ngày này (theo bộ lọc hiện tại).</p>
+           )}
+           {daySessions(mobileDay).filter((s) => filteredIds.has(s.id)).map((s) => {
+-            const c = colorFor(s.subject)
++            const c = colorFor(s.subject, dark)
+             return (
+-              <button key={s.id} onClick={() => onSelect(s)} className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm">
++              <button key={s.id} onClick={() => onSelect(s)} className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-left shadow-sm">
+                 <span className="h-full min-h-10 w-1.5 rounded-full" style={{ background: c.border }} />
+                 <span className="min-w-0 flex-1">
+-                  <span className="block text-sm font-bold">{s.subject}</span>
+-                  <span className="block text-xs text-slate-500">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end, times)}</span>
+-                  <span className="block text-xs text-slate-500">{[s.room, s.teacher].filter(Boolean).join(' · ') || 'Chưa có phòng / GV'}</span>
++                  <span className="block text-sm font-bold">{iconFor(s)} {s.subject}</span>
++                  <span className="block text-xs text-slate-500 dark:text-slate-400">Tiết {s.start}-{s.end} · {timeRange(s.start, s.end, times)}</span>
++                  <span className="block text-xs text-slate-500 dark:text-slate-400">{[s.room, s.teacher].filter(Boolean).join(' · ') || 'Chưa có phòng / GV'}</span>
+                 </span>
+-                {conflicts.has(s.id) && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700">Trùng</span>}
++                {conflicts.has(s.id) && <span className="rounded bg-red-100 dark:bg-red-900/60 px-2 py-0.5 text-xs font-bold text-red-700 dark:text-red-300">Trùng</span>}
+               </button>
+             )
+           })}
+diff --git a/src/hooks/useSchedule.js b/src/hooks/useSchedule.js
+index bd22fdd..cc0315c 100644
+--- a/src/hooks/useSchedule.js
++++ b/src/hooks/useSchedule.js
+@@ -8,7 +8,7 @@ export const STORAGE_KEY = 'xep-lich-hoc-v1'
+ 
+ export const EMPTY_FORM = {
+   subject: '', code: '', className: '', day: 0, start: 7, end: 9,
+-  room: '', teacher: '', note: '', type: 'Học', examDate: '',
++  room: '', teacher: '', note: '', type: 'Học', examDate: '', icon: '',
+ }
+ 
+ function loadData() {
+diff --git a/src/hooks/useTheme.js b/src/hooks/useTheme.js
+new file mode 100644
+index 0000000..edda060
+--- /dev/null
++++ b/src/hooks/useTheme.js
+@@ -0,0 +1,70 @@
++import { useCallback, useEffect, useState } from 'react'
++import { backgroundStyle } from '../lib/theme.js'
++
++export const THEME_KEY = 'schedulingapp-theme-v1'
++
++const DEFAULT_THEME = { mode: 'system', background: 'default', customColor: '#4f46e5' }
++
++function loadTheme() {
++  try {
++    const raw = localStorage.getItem(THEME_KEY)
++    if (!raw) return DEFAULT_THEME
++    const p = JSON.parse(raw)
++    return {
++      mode: ['light', 'dark', 'system'].includes(p.mode) ? p.mode : 'system',
++      background: typeof p.background === 'string' ? p.background : 'default',
++      customColor: typeof p.customColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(p.customColor) ? p.customColor : '#4f46e5',
++    }
++  } catch { return DEFAULT_THEME }
++}
++
++/**
++ * Giao diện sáng/tối + nền dashboard.
++ * - mode: 'light' | 'dark' | 'system' (system theo OS, nghe thay đổi live).
++ * - dark: đang tối thật hay không — dùng để chọn màu nền / màu khối môn.
++ * - background / customColor: nền dashboard, lưu cùng key.
++ * Hook tự gắn/gỡ class 'dark' trên <html> và nền cho <body>.
++ */
++export function useTheme() {
++  const [settings, setSettings] = useState(loadTheme)
++  const [systemDark, setSystemDark] = useState(
++    () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches,
++  )
++
++  useEffect(() => {
++    const mq = window.matchMedia('(prefers-color-scheme: dark)')
++    const onChange = (e) => setSystemDark(e.matches)
++    mq.addEventListener?.('change', onChange)
++    return () => mq.removeEventListener?.('change', onChange)
++  }, [])
++
++  useEffect(() => {
++    try { localStorage.setItem(THEME_KEY, JSON.stringify(settings)) } catch { /* bỏ qua */ }
++  }, [settings])
++
++  const dark = settings.mode === 'dark' || (settings.mode === 'system' && systemDark)
++  const bg = backgroundStyle(settings.background, settings.customColor, dark)
++
++  useEffect(() => {
++    document.documentElement.classList.toggle('dark', dark)
++    document.body.style.background = bg
++    return () => { document.body.style.background = '' }
++  }, [dark, bg])
++
++  const setMode = useCallback((mode) => setSettings((s) => ({ ...s, mode })), [])
++  const cycleMode = useCallback(() => {
++    setSettings((s) => ({ ...s, mode: s.mode === 'light' ? 'dark' : s.mode === 'dark' ? 'system' : 'light' }))
++  }, [])
++  const setBackground = useCallback((background) => setSettings((s) => ({ ...s, background })), [])
++  const setCustomColor = useCallback((customColor) => setSettings((s) => ({ ...s, customColor })), [])
++
++  return {
++    ...settings,
++    dark,
++    backgroundCss: bg,
++    setMode,
++    cycleMode,
++    setBackground,
++    setCustomColor,
++  }
++}
+diff --git a/src/index.css b/src/index.css
+index dadebea..b05a265 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -1,11 +1,19 @@
+ @import "tailwindcss";
+ 
++/* Dark mode theo class .dark trên <html> (hook useTheme gắn/gỡ class này). */
++@custom-variant dark (&:where(.dark, .dark *));
++
+ body {
+   font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+   background: #f6f7fb;
+   color: #111827;
+ }
+ 
++.dark body {
++  background: #0f172a;
++  color: #f1f5f9;
++}
++
+ .input {
+   width: 100%;
+   border-radius: 0.75rem;
+@@ -14,10 +22,24 @@ body {
+   padding: 0.5rem 0.75rem;
+   font-size: 0.875rem;
+   outline: none;
++  color: #111827;
+ }
+ .input:focus {
+   border-color: #4f46e5;
+ }
++.dark .input {
++  border-color: #475569;
++  background: #1e293b;
++  color: #f1f5f9;
++}
++.dark .input::placeholder {
++  color: #94a3b8;
++}
++/* Option trong select ở dark mode: nền tối để không bị chữ đen trên nền trắng hệ thống. */
++.dark .input option {
++  background: #1e293b;
++  color: #f1f5f9;
++}
+ 
+ /* Lưới lịch: cuộn ngang trên màn hình hẹp thay vì vỡ layout */
+ .timetable-scroll {
+diff --git a/src/lib/colors.js b/src/lib/colors.js
+index 3f5801c..26c3486 100644
+--- a/src/lib/colors.js
++++ b/src/lib/colors.js
+@@ -1,24 +1,28 @@
+ // Màu cho từng môn — tự sinh từ tên môn, ổn định giữa các lần mở.
++// Mỗi màu có bản sáng và bản tối (darkBg/darkText) để khối môn vẫn đọc
++// được ở dark mode: nền đậm hơn, chữ sáng hơn.
+ export const PALETTE = [
+-  { bg: '#dcfce7', border: '#16a34a', text: '#14532d' },
+-  { bg: '#dbeafe', border: '#2563eb', text: '#1e3a8a' },
+-  { bg: '#fef3c7', border: '#d97706', text: '#78350f' },
+-  { bg: '#fce7f3', border: '#db2777', text: '#831843' },
+-  { bg: '#e0e7ff', border: '#4f46e5', text: '#312e81' },
+-  { bg: '#cffafe', border: '#0891b2', text: '#164e63' },
+-  { bg: '#fee2e2', border: '#dc2626', text: '#7f1d1d' },
+-  { bg: '#ede9fe', border: '#7c3aed', text: '#4c1d95' },
++  { bg: '#dcfce7', border: '#16a34a', text: '#14532d', darkBg: '#14532d', darkText: '#bbf7d0' },
++  { bg: '#dbeafe', border: '#2563eb', text: '#1e3a8a', darkBg: '#1e3a8a', darkText: '#bfdbfe' },
++  { bg: '#fef3c7', border: '#d97706', text: '#78350f', darkBg: '#78350f', darkText: '#fde68a' },
++  { bg: '#fce7f3', border: '#db2777', text: '#831843', darkBg: '#831843', darkText: '#fbcfe8' },
++  { bg: '#e0e7ff', border: '#4f46e5', text: '#312e81', darkBg: '#312e81', darkText: '#c7d2fe' },
++  { bg: '#cffafe', border: '#0891b2', text: '#164e63', darkBg: '#164e63', darkText: '#a5f3fc' },
++  { bg: '#fee2e2', border: '#dc2626', text: '#7f1d1d', darkBg: '#7f1d1d', darkText: '#fecaca' },
++  { bg: '#ede9fe', border: '#7c3aed', text: '#4c1d95', darkBg: '#4c1d95', darkText: '#ddd6fe' },
+ ]
+ 
+-export function colorFor(subject) {
++export function colorFor(subject, dark = false) {
+   let h = 0
+   for (const ch of subject) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+-  return PALETTE[h % PALETTE.length]
++  const p = PALETTE[h % PALETTE.length]
++  if (!dark) return { bg: p.bg, border: p.border, text: p.text }
++  return { bg: p.darkBg, border: p.border, text: p.darkText }
+ }
+ 
+ export const TYPE_STYLE = {
+-  'Học': 'bg-emerald-100 text-emerald-800',
+-  'Thi': 'bg-red-100 text-red-800',
+-  'Làm việc': 'bg-amber-100 text-amber-800',
+-  'Cá nhân': 'bg-sky-100 text-sky-800',
++  'Học': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
++  'Thi': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
++  'Làm việc': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
++  'Cá nhân': 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
+ }
+diff --git a/src/lib/icons.js b/src/lib/icons.js
+new file mode 100644
+index 0000000..4956987
+--- /dev/null
++++ b/src/lib/icons.js
+@@ -0,0 +1,36 @@
++// Icon trang trí cho từng buổi học — emoji, không cần thư viện icon.
++// Buổi nào chưa chọn icon thì dùng icon mặc định theo loại (xem iconFor).
++export const ICON_OPTIONS = [
++  { emoji: '', label: 'Không icon' },
++  { emoji: '📚', label: 'Học chung' },
++  { emoji: '💻', label: 'Lập trình' },
++  { emoji: '🧮', label: 'Toán / Thống kê' },
++  { emoji: '🧪', label: 'Thí nghiệm' },
++  { emoji: '📝', label: 'Thi / Kiểm tra' },
++  { emoji: '🎨', label: 'Thiết kế' },
++  { emoji: '🗣️', label: 'Ngoại ngữ / Tiếng Việt' },
++  { emoji: '⚽', label: 'Thể thao' },
++  { emoji: '💼', label: 'Việc làm' },
++  { emoji: '🎵', label: 'Âm nhạc' },
++  { emoji: '🔬', label: 'Khoa học' },
++  { emoji: '📖', label: 'Đọc' },
++  { emoji: '🧑‍🏫', label: 'Giảng dạy' },
++  { emoji: '💡', label: 'Ý tưởng' },
++  { emoji: '⭐', label: 'Khác' },
++]
++
++export const DEFAULT_ICON_BY_TYPE = {
++  'Học': '📚',
++  'Thi': '📝',
++  'Làm việc': '💼',
++  'Cá nhân': '⭐',
++}
++
++// Icon hiển thị cho một buổi: icon đã chọn, không thì mặc định theo loại,
++// loại lạ thì ⭐. Buổi cũ chưa có trường icon vẫn hiển thị đúng — không
++// cần migrate dữ liệu.
++export function iconFor(session) {
++  if (!session) return '⭐'
++  if (session.icon) return session.icon
++  return DEFAULT_ICON_BY_TYPE[session.type] || '⭐'
++}
+diff --git a/src/lib/icons.test.js b/src/lib/icons.test.js
+new file mode 100644
+index 0000000..ecdbb19
+--- /dev/null
++++ b/src/lib/icons.test.js
+@@ -0,0 +1,26 @@
++import { describe, expect, it } from 'vitest'
++import { iconFor, ICON_OPTIONS, DEFAULT_ICON_BY_TYPE } from './icons.js'
++
++describe('iconFor — icon mặc định theo loại, icon đã chọn thắng', () => {
++  it('buổi Học không icon thì dùng 📚, Thi dùng 📝, Làm việc dùng 💼, Cá nhân dùng ⭐', () => {
++    expect(iconFor({ type: 'Học' })).toBe('📚')
++    expect(iconFor({ type: 'Thi' })).toBe('📝')
++    expect(iconFor({ type: 'Làm việc' })).toBe('💼')
++    expect(iconFor({ type: 'Cá nhân' })).toBe('⭐')
++  })
++
++  it('icon đã chọn thì thắng icon mặc định theo loại', () => {
++    expect(iconFor({ type: 'Học', icon: '💻' })).toBe('💻')
++    expect(iconFor({ type: 'Thi', icon: '🧮' })).toBe('🧮')
++  })
++
++  it('loại lạ hoặc không có buổi thì về ⭐, và danh sách icon có đủ lựa chọn', () => {
++    expect(iconFor({ type: 'Không biết' })).toBe('⭐')
++    expect(iconFor(null)).toBe('⭐')
++    expect(ICON_OPTIONS.length).toBeGreaterThanOrEqual(10)
++    expect(ICON_OPTIONS.map((o) => o.emoji)).toContain('💻')
++    expect(Object.keys(DEFAULT_ICON_BY_TYPE)).toEqual(
++      expect.arrayContaining(['Học', 'Thi', 'Làm việc', 'Cá nhân']),
++    )
++  })
++})
+diff --git a/src/lib/theme.js b/src/lib/theme.js
+new file mode 100644
+index 0000000..9fbba1a
+--- /dev/null
++++ b/src/lib/theme.js
+@@ -0,0 +1,55 @@
++// Nền dashboard + giao diện sáng/tối. Nền là gradient CSS (không ảnh),
++// áp qua style inline trên wrapper chính + body, nên đổi là thấy ngay
++// và không cần load thêm gì.
++
++export const BACKGROUND_OPTIONS = [
++  { id: 'default', label: 'Mặc định' },
++  { id: 'sunset', label: 'Hoàng hôn' },
++  { id: 'forest', label: 'Rừng xanh' },
++  { id: 'ocean', label: 'Biển' },
++  { id: 'custom', label: 'Màu tự chọn' },
++]
++
++function hexToRgb(hex) {
++  const h = (hex || '').replace('#', '')
++  if (!/^[0-9a-fA-F]{6}$/.test(h)) return null
++  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
++}
++
++// Trộn một màu hex về phía trắng (amount > 0) hoặc đen (amount < 0),
++// amount trong khoảng -1..1. Dùng để làm gradient nhạt/đậm từ màu tự chọn.
++export function shade(hex, amount) {
++  const rgb = hexToRgb(hex)
++  if (!rgb) return hex
++  const target = amount >= 0 ? 255 : 0
++  const a = Math.abs(amount)
++  const mixed = rgb.map((v) => Math.round(v + (target - v) * a))
++  return `#${mixed.map((v) => v.toString(16).padStart(2, '0')).join('')}`
++}
++
++// Trả về giá trị CSS background cho nền đã chọn. Ở dark mode mọi nền đều
++// là bản tối để chữ vẫn đọc được — không đặt gradient sáng sau chữ tối.
++export function backgroundStyle(background, customColor, dark) {
++  if (dark) {
++    switch (background) {
++      case 'sunset': return 'linear-gradient(135deg, #431407 0%, #4c0519 55%, #451a03 100%)'
++      case 'forest': return 'linear-gradient(135deg, #052e16 0%, #064e3b 55%, #022c22 100%)'
++      case 'ocean': return 'linear-gradient(135deg, #082f49 0%, #134e4a 55%, #1e1b4b 100%)'
++      case 'custom': return `linear-gradient(135deg, ${shade(customColor, -0.75)} 0%, ${shade(customColor, -0.55)} 100%)`
++      default: return 'linear-gradient(180deg, #1e1b4b 0%, #0f172a 100%)'
++    }
++  }
++  switch (background) {
++    case 'sunset': return 'linear-gradient(135deg, #ffedd5 0%, #fecdd3 55%, #fde68a 100%)'
++    case 'forest': return 'linear-gradient(135deg, #dcfce7 0%, #d1fae5 55%, #fef9c3 100%)'
++    case 'ocean': return 'linear-gradient(135deg, #dbeafe 0%, #cffafe 55%, #e0e7ff 100%)'
++    case 'custom': return `linear-gradient(135deg, ${shade(customColor, 0.75)} 0%, ${shade(customColor, 0.55)} 100%)`
++    default: return 'linear-gradient(180deg, #eef2ff 0%, #f6f7fb 100%)'
++  }
++}
++
++export const THEME_MODES = [
++  { id: 'light', label: '☀️ Sáng', icon: '☀️' },
++  { id: 'dark', label: '🌙 Tối', icon: '🌙' },
++  { id: 'system', label: '💻 Theo hệ thống', icon: '💻' },
++]
+diff --git a/src/pages/DashboardPage.jsx b/src/pages/DashboardPage.jsx
+index ad3fedd..6f96057 100644
+--- a/src/pages/DashboardPage.jsx
++++ b/src/pages/DashboardPage.jsx
+@@ -5,7 +5,9 @@ import { useTasks } from '../hooks/useTasks.js'
+ import { usePreset } from '../hooks/usePreset.js'
+ import { useReminders } from '../hooks/useReminders.js'
+ import { useInstallPrompt } from '../hooks/useInstallPrompt.js'
++import { useTheme } from '../hooks/useTheme.js'
+ import { Header } from '../components/Header.jsx'
++import { Sidebar, NAV_ITEMS, useSidebarCollapsed } from '../components/Sidebar.jsx'
+ import { StatsBar } from '../components/StatsBar.jsx'
+ import { ConflictBanner } from '../components/ConflictBanner.jsx'
+ import { ReminderBanner } from '../components/ReminderBanner.jsx'
+@@ -21,8 +23,17 @@ import { ExamList } from '../components/ExamList.jsx'
+ import { FreeTimeFinder } from '../components/FreeTimeFinder.jsx'
+ import { exportTimetablePng } from '../lib/exportPng.js'
+ 
++const VIEW_TITLES = {
++  schedule: '📅 Lịch học',
++  exams: '📝 Lịch thi',
++  simulator: '🧪 Mô phỏng đăng ký',
++  freetime: '👥 Giờ trống chung',
++  tasks: '✅ Task & Deadline',
++}
++
+ export function DashboardPage() {
+   const preset = usePreset()
++  const theme = useTheme()
+   const schedule = useSchedule(preset.times)
+   const {
+     semester, setSemester, sessions, conflicts,
+@@ -34,13 +45,16 @@ export function DashboardPage() {
+   const reminders = useReminders(sessions, tasksApi.tasks, preset.times)
+   const install = useInstallPrompt()
+   const [taskPrefill, setTaskPrefill] = useState(null)
++  const [sidebarCollapsed, toggleSidebarCollapsed] = useSidebarCollapsed()
++  const [settingsOpen, setSettingsOpen] = useState(false)
+   const subjects = useMemo(
+     () => [...new Set(sessions.map((s) => s.subject))].sort(),
+     [sessions],
+   )
+ 
+   // Trạng thái giao diện (tìm kiếm, lọc, modal đang mở...) — dữ liệu nằm ở hook.
+-  const [view, setView] = useState('schedule') // 'schedule' | 'simulator' | 'exams'
++  // view: 'schedule' | 'exams' | 'simulator' | 'freetime' | 'tasks'
++  const [view, setView] = useState('schedule')
+   const [search, setSearch] = useState('')
+   const [filterType, setFilterType] = useState('Tất cả')
+   const [mobileDay, setMobileDay] = useState(todayIndex())
+@@ -78,82 +92,125 @@ export function DashboardPage() {
+   }
+ 
+   return (
+-    <div className="min-h-screen">
+-      <Header
+-        semester={semester}
+-        onSemesterChange={setSemester}
+-        onExportCSV={exportCSV}
+-        onExportBackup={exportBackup}
+-        onExportIcs={() => exportIcs(tasksApi.tasks)}
+-        onExportPng={() => exportTimetablePng(sessions, preset.times, semester === 'hk2' ? 'HK2' : 'HK1')}
+-        preset={preset}
+-        onImportJSON={importJSON}
+-        onRestoreSeed={restoreSeed}
++    <div className="min-h-screen" style={{ background: theme.backgroundCss }}>
++      <Sidebar
+         view={view}
+         onViewChange={setView}
+-        reminders={reminders}
+-        onReminderToggle={reminders.toggleEnabled}
+-        onReminderMinutes={reminders.setMinutesBefore}
+-        onRequestPermission={reminders.requestPermission}
+-        install={install}
++        semester={semester}
++        onSemesterChange={setSemester}
++        theme={theme}
++        onOpenSettings={() => setSettingsOpen(true)}
++        collapsed={sidebarCollapsed}
++        onToggleCollapsed={toggleSidebarCollapsed}
+       />
+ 
+-      {view === 'simulator' ? (
+-        <SimulatorPage schedule={schedule} times={preset.times} />
+-      ) : view === 'exams' ? (
+-        <main className="mx-auto max-w-7xl px-4 py-5">
+-          <h2 className="text-xl font-extrabold text-red-700">Lịch thi</h2>
+-          <p className="mt-1 text-sm text-slate-500">
+-            Riêng các buổi thi và task thi — có ngày thi thì đếm ngược, chưa có ngày thì xếp sau.
+-            Các buổi thi vẫn hiện trên lưới tuần ở tab Lịch học.
+-          </p>
+-          <ExamList sessions={sessions} tasks={tasksApi.tasks} times={preset.times} onSelectSession={setDetail} />
+-        </main>
+-      ) : (
+-      <main className="mx-auto max-w-7xl px-4 py-5">
+-        {notice && (
+-          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800">{notice}</div>
+-        )}
+-        <ReminderBanner banners={reminders.banners} onDismiss={reminders.dismissBanner} />
+-
+-        <StatsBar stats={stats} />
+-        <ConflictBanner conflictList={conflictList} />
+-        <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} times={preset.times} />
+-        <TasksPanel
+-          tasks={tasksApi.tasks}
+-          subjects={subjects}
+-          onAdd={tasksApi.addTask}
+-          onToggleDone={tasksApi.toggleDone}
+-          onDelete={tasksApi.deleteTask}
+-          prefill={taskPrefill}
+-        />
++      {/* Thanh tab ngang trên mobile — cùng các mục sidebar, không dùng hamburger. */}
++      <nav className="sticky top-0 z-20 flex gap-1.5 overflow-x-auto border-b border-slate-200 bg-white/95 px-3 py-2 backdrop-blur md:hidden dark:border-slate-700 dark:bg-slate-900/95">
++        {NAV_ITEMS.map((item) => (
++          <button
++            key={item.id}
++            onClick={() => setView(item.id)}
++            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${
++              view === item.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
++            }`}
++          >
++            {item.icon} {item.label}
++          </button>
++        ))}
++      </nav>
+ 
+-        <Toolbar
+-          search={search} onSearchChange={setSearch}
+-          filterType={filterType} onFilterChange={setFilterType}
+-          onAdd={() => setForm({ ...EMPTY_FORM })}
+-          pasteOpen={pasteOpen} onTogglePaste={() => setPasteOpen((v) => !v)}
+-        />
+-        <QuickImportModal
+-          open={pasteOpen}
+-          pasteText={pasteText} onPasteTextChange={setPasteText}
+-          pasteResult={pasteResult} onImport={handlePaste}
++      <div className={sidebarCollapsed ? 'md:pl-16' : 'md:pl-60'}>
++        <Header
++          semester={semester}
++          onSemesterChange={setSemester}
++          viewTitle={VIEW_TITLES[view]}
++          theme={theme}
++          settingsOpen={settingsOpen}
++          onSettingsOpenChange={setSettingsOpen}
++          onExportCSV={exportCSV}
++          onExportBackup={exportBackup}
++          onExportIcs={() => exportIcs(tasksApi.tasks)}
++          onExportPng={() => exportTimetablePng(sessions, preset.times, semester === 'hk2' ? 'HK2' : 'HK1')}
++          preset={preset}
++          onImportJSON={importJSON}
++          onRestoreSeed={restoreSeed}
++          reminders={reminders}
++          onReminderToggle={reminders.toggleEnabled}
++          onReminderMinutes={reminders.setMinutesBefore}
++          onRequestPermission={reminders.requestPermission}
++          install={install}
+         />
+ 
+-        <WeekGrid
+-          sessions={sessions} filteredIds={filteredIds} conflicts={conflicts} today={today}
+-          mobileDay={mobileDay} onMobileDayChange={setMobileDay}
+-          daySessions={daySessions} onSelect={setDetail}
+-          onEmptyCell={(day, period) => setForm({ ...EMPTY_FORM, day, start: period, end: period })}
+-          times={preset.times}
+-        />
+-        <FreeTimeFinder mySessions={sessions} times={preset.times} />
++        {view === 'simulator' ? (
++          <SimulatorPage schedule={schedule} times={preset.times} dark={theme.dark} />
++        ) : view === 'exams' ? (
++          <main className="mx-auto max-w-7xl px-4 py-5">
++            <h2 className="text-xl font-extrabold text-red-700 dark:text-red-300">Lịch thi</h2>
++            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
++              Riêng các buổi thi và task thi — có ngày thi thì đếm ngược, chưa có ngày thì xếp sau.
++              Các buổi thi vẫn hiện trên lưới tuần ở tab Lịch học.
++            </p>
++            <ExamList sessions={sessions} tasks={tasksApi.tasks} times={preset.times} onSelectSession={setDetail} />
++          </main>
++        ) : view === 'freetime' ? (
++          <main className="mx-auto max-w-7xl px-4 py-5">
++            <FreeTimeFinder mySessions={sessions} times={preset.times} />
++            <footer className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
++              Dữ liệu chỉ lưu trên trình duyệt này — Backup JSON trước khi đổi máy.
++            </footer>
++          </main>
++        ) : view === 'tasks' ? (
++          <main className="mx-auto max-w-7xl px-4 py-5">
++            <TasksPanel
++              tasks={tasksApi.tasks}
++              subjects={subjects}
++              onAdd={tasksApi.addTask}
++              onToggleDone={tasksApi.toggleDone}
++              onDelete={tasksApi.deleteTask}
++              prefill={taskPrefill}
++            />
++            <footer className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
++              Dữ liệu chỉ lưu trên trình duyệt này — Backup JSON trước khi đổi máy.
++            </footer>
++          </main>
++        ) : (
++        <main className="mx-auto max-w-7xl px-4 py-5">
++          {notice && (
++            <div className="mb-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 px-4 py-2.5 text-sm font-medium text-emerald-800 dark:text-emerald-200">{notice}</div>
++          )}
++          <ReminderBanner banners={reminders.banners} onDismiss={reminders.dismissBanner} />
++
++          <StatsBar stats={stats} />
++          <ConflictBanner conflictList={conflictList} />
++          <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} times={preset.times} dark={theme.dark} />
+ 
+-        <footer className="mt-6 text-center text-xs text-slate-400">
+-          Dữ liệu chỉ lưu trên trình duyệt này — Backup JSON trước khi đổi máy.
+-        </footer>
+-      </main>
+-      )}
++          <Toolbar
++            search={search} onSearchChange={setSearch}
++            filterType={filterType} onFilterChange={setFilterType}
++            onAdd={() => setForm({ ...EMPTY_FORM })}
++            pasteOpen={pasteOpen} onTogglePaste={() => setPasteOpen((v) => !v)}
++          />
++          <QuickImportModal
++            open={pasteOpen}
++            pasteText={pasteText} onPasteTextChange={setPasteText}
++            pasteResult={pasteResult} onImport={handlePaste}
++          />
++
++          <WeekGrid
++            sessions={sessions} filteredIds={filteredIds} conflicts={conflicts} today={today}
++            mobileDay={mobileDay} onMobileDayChange={setMobileDay}
++            daySessions={daySessions} onSelect={setDetail}
++            onEmptyCell={(day, period) => setForm({ ...EMPTY_FORM, day, start: period, end: period })}
++            times={preset.times}
++            dark={theme.dark}
++          />
++
++          <footer className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
++            Dữ liệu chỉ lưu trên trình duyệt này — Backup JSON trước khi đổi máy.
++          </footer>
++        </main>
++        )}
++      </div>
+ 
+       <SessionDetailModal
+         session={detail}
+@@ -165,7 +222,7 @@ export function DashboardPage() {
+         onAddTask={detail ? () => {
+           setTaskPrefill({ subject: detail.subject, sessionId: detail.id, type: 'Bài tập', nonce: Date.now() })
+           setDetail(null)
+-          setView('schedule')
++          setView('tasks')
+         } : undefined}
+       />
+       <SessionFormModal
+diff --git a/src/pages/SimulatorPage.jsx b/src/pages/SimulatorPage.jsx
+index 63a9dda..d7cacbb 100644
+--- a/src/pages/SimulatorPage.jsx
++++ b/src/pages/SimulatorPage.jsx
+@@ -12,7 +12,7 @@ import { PlanImport } from '../components/PlanImport.jsx'
+ // Mô phỏng đăng ký: Lộc nhập các lớp định đăng ký, app vẽ thử lịch cả kỳ,
+ // báo trùng ngay, chấm điểm và so sánh các phương án A / B / C.
+ // Chưa có OCR ảnh chụp — đó là bước sau.
+-export function SimulatorPage({ schedule, times }) {
++export function SimulatorPage({ schedule, times, dark = false }) {
+   const plans = usePlans()
+   const {
+     plans: planList, activePlan, activePlanId, setActivePlanId,
+@@ -50,11 +50,11 @@ export function SimulatorPage({ schedule, times }) {
+   return (
+     <main className="mx-auto max-w-7xl px-4 py-5">
+       {notice && (
+-        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800">{notice}</div>
++        <div className="mb-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 px-4 py-2.5 text-sm font-medium text-emerald-800 dark:text-emerald-200">{notice}</div>
+       )}
+ 
+       <h2 className="text-xl font-extrabold">Mô phỏng đăng ký</h2>
+-      <p className="mt-1 text-sm text-slate-500">
++      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+         Nhập các lớp định đăng ký, xem thử lịch cả kỳ trước khi bấm đăng ký thật trên web trường.
+         So sánh các phương án rồi chốt phương án đẹp nhất làm lịch chính.
+       </p>
+@@ -65,12 +65,12 @@ export function SimulatorPage({ schedule, times }) {
+           <button
+             key={p.id}
+             onClick={() => setActivePlanId(p.id)}
+-            className={`rounded-xl border px-4 py-2 text-sm font-bold ${p.id === activePlanId ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white hover:bg-slate-50'}`}
++            className={`rounded-xl border px-4 py-2 text-sm font-bold ${p.id === activePlanId ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+           >
+             {p.name} · {scorePlan(p.sessions).score}đ
+           </button>
+         ))}
+-        <button onClick={handleCreate} className="rounded-xl border border-dashed border-slate-400 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
++        <button onClick={handleCreate} className="rounded-xl border border-dashed border-slate-400 px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
+           + Phương án mới
+         </button>
+       </div>
+@@ -79,16 +79,16 @@ export function SimulatorPage({ schedule, times }) {
+         <div className="mt-3 flex flex-wrap gap-2">
+           <button
+             onClick={() => { const n = prompt('Đổi tên phương án:', activePlan.name); if (n !== null) renamePlan(activePlan.id, n) }}
+-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
++            className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
+           >
+             ✏️ Đổi tên
+           </button>
+-          <button onClick={() => duplicatePlan(activePlan.id)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">
++          <button onClick={() => duplicatePlan(activePlan.id)} className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
+             📋 Nhân bản
+           </button>
+           <button
+             onClick={() => { if (confirm(`Xóa phương án "${activePlan.name}"?`)) deletePlan(activePlan.id) }}
+-            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50"
++            className="rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40"
+           >
+             🗑️ Xóa phương án
+           </button>
+@@ -111,21 +111,21 @@ export function SimulatorPage({ schedule, times }) {
+           { label: 'Cặp trùng', value: `${score.conflicts} cặp` },
+           { label: 'Giờ trống giữa ca', value: `${score.gapPeriods} tiết` },
+         ].map((c) => (
+-          <div key={c.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+-            <div className="text-2xl font-extrabold text-indigo-700">{c.value}</div>
+-            <div className="text-sm text-slate-500">{c.label}</div>
++          <div key={c.label} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
++            <div className="text-2xl font-extrabold text-indigo-700 dark:text-indigo-300">{c.value}</div>
++            <div className="text-sm text-slate-500 dark:text-slate-400">{c.label}</div>
+           </div>
+         ))}
+       </div>
+-      <p className="mt-2 text-xs text-slate-500">
++      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+         Cách tính điểm: 100 − 20 × cặp trùng − 8 × (ngày lên trường vượt quá 3) − 3 × tiết buổi tối − 1 × tiết trống giữa các ca trong ngày.
+       </p>
+ 
+       {/* Cảnh báo trùng trực tiếp */}
+       {pairs.length > 0 && (
+-        <div className="mt-4 rounded-2xl border border-red-300 bg-red-50 p-4">
+-          <p className="font-bold text-red-800">⚠️ Phương án này có {pairs.length} cặp trùng tiết:</p>
+-          <ul className="mt-1 list-disc pl-5 text-sm text-red-700">
++        <div className="mt-4 rounded-2xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/60 p-4">
++          <p className="font-bold text-red-800 dark:text-red-200">⚠️ Phương án này có {pairs.length} cặp trùng tiết:</p>
++          <ul className="mt-1 list-disc pl-5 text-sm text-red-700 dark:text-red-300">
+             {pairs.map((p, i) => (
+               <li key={i}>
+                 {DAY_NAMES[p.a.day]}, tiết {Math.max(p.a.start, p.b.start)}-{Math.min(p.a.end, p.b.end)}: {p.a.subject} ↔ {p.b.subject}
+@@ -136,7 +136,7 @@ export function SimulatorPage({ schedule, times }) {
+       )}
+ 
+       {/* Lưới thử — bấm khối môn để xem chi tiết, bấm ô trống để thêm lớp */}
+-      <WeekGrid times={times}
++      <WeekGrid times={times} dark={dark}
+         sessions={sessions} filteredIds={filteredIds} conflicts={conflicts} today={today}
+         mobileDay={mobileDay} onMobileDayChange={setMobileDay}
+         daySessions={daySessions} onSelect={setDetail}

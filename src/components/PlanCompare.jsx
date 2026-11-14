@@ -22,10 +22,10 @@ export function PlanCompare({ plans, activePlanId, onSelectPlan, onApplyPlan }) 
   }
 
   return (
-    <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
       <table className="w-full min-w-[640px] text-sm">
         <thead>
-          <tr className="border-b border-slate-200 bg-slate-50 text-left">
+          <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-left">
             <th className="px-4 py-3 font-bold">Tiêu chí</th>
             {scored.map(({ plan }) => (
               <th key={plan.id} className="px-4 py-3 font-bold">
@@ -33,7 +33,7 @@ export function PlanCompare({ plans, activePlanId, onSelectPlan, onApplyPlan }) 
                   {plan.name}
                   {plan.id === activePlanId && ' ●'}
                 </button>
-                <span className="block text-xs font-normal text-slate-500">{plan.sessions.length} buổi</span>
+                <span className="block text-xs font-normal text-slate-500 dark:text-slate-400">{plan.sessions.length} buổi</span>
               </th>
             ))}
           </tr>
@@ -42,12 +42,12 @@ export function PlanCompare({ plans, activePlanId, onSelectPlan, onApplyPlan }) 
           {ROWS.map((row) => {
             const best = bestValue(row)
             return (
-              <tr key={row.key} className="border-b border-slate-100">
+              <tr key={row.key} className="border-b border-slate-100 dark:border-slate-800">
                 <td className="px-4 py-2.5 font-semibold">{row.label}</td>
                 {scored.map(({ plan, ...s }) => (
                   <td
                     key={plan.id}
-                    className={`px-4 py-2.5 ${s[row.key] === best ? 'bg-emerald-50 font-extrabold text-emerald-800' : ''}`}
+                    className={`px-4 py-2.5 ${s[row.key] === best ? 'bg-emerald-50 dark:bg-emerald-950/60 font-extrabold text-emerald-800 dark:text-emerald-200' : ''}`}
                   >
                     {s[row.key]}{row.suffix}
                   </td>
@@ -70,7 +70,7 @@ export function PlanCompare({ plans, activePlanId, onSelectPlan, onApplyPlan }) 
           </tr>
         </tbody>
       </table>
-      <p className="border-t border-slate-100 px-4 py-2 text-xs text-slate-500">
+      <p className="border-t border-slate-100 dark:border-slate-800 px-4 py-2 text-xs text-slate-500 dark:text-slate-400">
         Điểm lịch đẹp = 100 − 20 × cặp trùng − 8 × (ngày lên trường vượt quá 3) − 3 × tiết buổi tối − 1 × tiết trống giữa các ca.
         Ô xanh lá là giá trị tốt nhất trong hàng.
       </p>

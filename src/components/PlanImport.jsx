@@ -53,9 +53,9 @@ export function PlanImport({ onImport }) {
   }
 
   return (
-    <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="mt-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
       <h3 className="font-extrabold">Nhập lớp vào phương án này</h3>
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
         Dán đoạn copy từ sv.iuh.edu.vn, dán nhanh, hoặc tải file CSV/TSV xuất từ Excel.
         Chưa có OCR ảnh chụp — đó là bước sau.
       </p>
@@ -64,7 +64,7 @@ export function PlanImport({ onImport }) {
           <button
             key={t.id}
             onClick={() => { setTab(t.id); setResult(null) }}
-            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${tab === t.id ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-300'}`}
+            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${tab === t.id ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600'}`}
           >
             {t.label}
           </button>
@@ -74,7 +74,7 @@ export function PlanImport({ onImport }) {
       {tab === 'file' ? (
         <div className="mt-3">
           <p className="text-sm font-semibold">File CSV / TSV / TXT — hàng đầu là tiêu đề cột (tùy chọn):</p>
-          <code className="mt-1 block whitespace-pre-wrap rounded-lg bg-slate-100 px-3 py-2 text-xs">{EXAMPLES.file}</code>
+          <code className="mt-1 block whitespace-pre-wrap rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs">{EXAMPLES.file}</code>
           <button
             onClick={() => fileRef.current?.click()}
             className="mt-3 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700"
@@ -93,16 +93,16 @@ export function PlanImport({ onImport }) {
               ? 'Dán nguyên đoạn copy từ trang Lịch học, lịch thi theo tuần của web trường — mỗi buổi một khối, cách nhau bằng dòng trống:'
               : 'Dán mỗi buổi một dòng, theo mẫu:'}
           </p>
-          <code className="mt-1 block whitespace-pre-wrap rounded-lg bg-slate-100 px-3 py-2 text-xs">{EXAMPLES[tab]}</code>
+          <code className="mt-1 block whitespace-pre-wrap rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs">{EXAMPLES[tab]}</code>
           {tab === 'iuh' && (
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Nhớ copy kèm dòng "Thứ X" cho mỗi buổi. Thiếu Thứ hoặc thiếu Tiết thì app không tự đoán — dòng đó sẽ báo lỗi để Lộc sửa lại.
             </p>
           )}
           <textarea
             value={text} onChange={(e) => setText(e.target.value)} rows={5}
             placeholder="Dán lịch ở đây…"
-            className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+            className="mt-3 w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm outline-none focus:border-indigo-500"
           />
           <button onClick={handleTextImport} className="mt-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">
             Nhập vào phương án
@@ -111,17 +111,17 @@ export function PlanImport({ onImport }) {
       )}
 
       {result && (
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+        <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm">
           <p>
             Đã thêm <b>{result.added} buổi</b>
-            {result.failed.length > 0 && <> · <b className="text-red-700">{result.failed.length} dòng lỗi</b></>}
+            {result.failed.length > 0 && <> · <b className="text-red-700 dark:text-red-300">{result.failed.length} dòng lỗi</b></>}
           </p>
           {result.failed.length > 0 && (
-            <ul className="mt-1 list-disc pl-5 text-xs text-red-700">
+            <ul className="mt-1 list-disc pl-5 text-xs text-red-700 dark:text-red-300">
               {result.failed.map((f, i) => (
                 <li key={i}>
                   {f.reason}
-                  {f.line && <span className="text-slate-500"> — "{String(f.line).slice(0, 80)}{String(f.line).length > 80 ? '…' : ''}"</span>}
+                  {f.line && <span className="text-slate-500 dark:text-slate-400"> — "{String(f.line).slice(0, 80)}{String(f.line).length > 80 ? '…' : ''}"</span>}
                 </li>
               ))}
             </ul>

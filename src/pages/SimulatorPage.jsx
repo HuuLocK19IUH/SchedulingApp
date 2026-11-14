@@ -12,7 +12,7 @@ import { PlanImport } from '../components/PlanImport.jsx'
 // Mô phỏng đăng ký: Lộc nhập các lớp định đăng ký, app vẽ thử lịch cả kỳ,
 // báo trùng ngay, chấm điểm và so sánh các phương án A / B / C.
 // Chưa có OCR ảnh chụp — đó là bước sau.
-export function SimulatorPage({ schedule, times }) {
+export function SimulatorPage({ schedule, times, dark = false }) {
   const plans = usePlans()
   const {
     plans: planList, activePlan, activePlanId, setActivePlanId,
@@ -50,11 +50,11 @@ export function SimulatorPage({ schedule, times }) {
   return (
     <main className="mx-auto max-w-7xl px-4 py-5">
       {notice && (
-        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800">{notice}</div>
+        <div className="mb-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 px-4 py-2.5 text-sm font-medium text-emerald-800 dark:text-emerald-200">{notice}</div>
       )}
 
       <h2 className="text-xl font-extrabold">Mô phỏng đăng ký</h2>
-      <p className="mt-1 text-sm text-slate-500">
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
         Nhập các lớp định đăng ký, xem thử lịch cả kỳ trước khi bấm đăng ký thật trên web trường.
         So sánh các phương án rồi chốt phương án đẹp nhất làm lịch chính.
       </p>
@@ -65,12 +65,12 @@ export function SimulatorPage({ schedule, times }) {
           <button
             key={p.id}
             onClick={() => setActivePlanId(p.id)}
-            className={`rounded-xl border px-4 py-2 text-sm font-bold ${p.id === activePlanId ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white hover:bg-slate-50'}`}
+            className={`rounded-xl border px-4 py-2 text-sm font-bold ${p.id === activePlanId ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
           >
             {p.name} · {scorePlan(p.sessions).score}đ
           </button>
         ))}
-        <button onClick={handleCreate} className="rounded-xl border border-dashed border-slate-400 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
+        <button onClick={handleCreate} className="rounded-xl border border-dashed border-slate-400 px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
           + Phương án mới
         </button>
       </div>
@@ -79,16 +79,16 @@ export function SimulatorPage({ schedule, times }) {
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             onClick={() => { const n = prompt('Đổi tên phương án:', activePlan.name); if (n !== null) renamePlan(activePlan.id, n) }}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
+            className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
           >
             ✏️ Đổi tên
           </button>
-          <button onClick={() => duplicatePlan(activePlan.id)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">
+          <button onClick={() => duplicatePlan(activePlan.id)} className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800">
             📋 Nhân bản
           </button>
           <button
             onClick={() => { if (confirm(`Xóa phương án "${activePlan.name}"?`)) deletePlan(activePlan.id) }}
-            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+            className="rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40"
           >
             🗑️ Xóa phương án
           </button>
@@ -111,21 +111,21 @@ export function SimulatorPage({ schedule, times }) {
           { label: 'Cặp trùng', value: `${score.conflicts} cặp` },
           { label: 'Giờ trống giữa ca', value: `${score.gapPeriods} tiết` },
         ].map((c) => (
-          <div key={c.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="text-2xl font-extrabold text-indigo-700">{c.value}</div>
-            <div className="text-sm text-slate-500">{c.label}</div>
+          <div key={c.label} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
+            <div className="text-2xl font-extrabold text-indigo-700 dark:text-indigo-300">{c.value}</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">{c.label}</div>
           </div>
         ))}
       </div>
-      <p className="mt-2 text-xs text-slate-500">
+      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
         Cách tính điểm: 100 − 20 × cặp trùng − 8 × (ngày lên trường vượt quá 3) − 3 × tiết buổi tối − 1 × tiết trống giữa các ca trong ngày.
       </p>
 
       {/* Cảnh báo trùng trực tiếp */}
       {pairs.length > 0 && (
-        <div className="mt-4 rounded-2xl border border-red-300 bg-red-50 p-4">
-          <p className="font-bold text-red-800">⚠️ Phương án này có {pairs.length} cặp trùng tiết:</p>
-          <ul className="mt-1 list-disc pl-5 text-sm text-red-700">
+        <div className="mt-4 rounded-2xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/60 p-4">
+          <p className="font-bold text-red-800 dark:text-red-200">⚠️ Phương án này có {pairs.length} cặp trùng tiết:</p>
+          <ul className="mt-1 list-disc pl-5 text-sm text-red-700 dark:text-red-300">
             {pairs.map((p, i) => (
               <li key={i}>
                 {DAY_NAMES[p.a.day]}, tiết {Math.max(p.a.start, p.b.start)}-{Math.min(p.a.end, p.b.end)}: {p.a.subject} ↔ {p.b.subject}
@@ -136,7 +136,7 @@ export function SimulatorPage({ schedule, times }) {
       )}
 
       {/* Lưới thử — bấm khối môn để xem chi tiết, bấm ô trống để thêm lớp */}
-      <WeekGrid times={times}
+      <WeekGrid times={times} dark={dark}
         sessions={sessions} filteredIds={filteredIds} conflicts={conflicts} today={today}
         mobileDay={mobileDay} onMobileDayChange={setMobileDay}
         daySessions={daySessions} onSelect={setDetail}

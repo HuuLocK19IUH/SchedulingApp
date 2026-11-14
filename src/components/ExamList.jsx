@@ -1,4 +1,5 @@
 import { DAY_NAMES, countdownLabel, daysUntil, timeRange } from '../lib/time.js'
+import { iconFor } from '../lib/icons.js'
 
 // Tab "Lịch thi": liệt kê riêng các buổi loại Thi + task loại Thi,
 // xếp theo ngày (có ngày trước, sớm nhất trước; chưa có ngày xếp sau).
@@ -32,7 +33,7 @@ export function ExamList({ sessions, tasks, times, onSelectSession }) {
 
   if (all.length === 0) {
     return (
-      <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
+      <div className="mt-5 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60 p-5 text-sm text-red-800 dark:text-red-200">
         <p className="font-bold">Chưa có lịch thi nào.</p>
         <p className="mt-1">Thêm một buổi loại “Thi” (có thể nhập thêm Ngày thi trong form) hoặc thêm một task loại “Thi” có ngày hết hạn — nó sẽ hiện ở đây với đếm ngược.</p>
       </div>
@@ -52,19 +53,19 @@ export function ExamList({ sessions, tasks, times, onSelectSession }) {
           <button
             key={`${e.kind}-${e.id}`}
             onClick={() => e.kind === 'session' && onSelectSession?.(e.session)}
-            className="flex w-full items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-left shadow-sm hover:bg-red-100/60"
+            className="flex w-full items-center gap-3 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60 p-4 text-left shadow-sm hover:bg-red-100/60"
           >
             <span className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-extrabold text-white">THI</span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-bold text-red-900">{e.subject}</span>
-              <span className="block text-xs text-red-700">
+              <span className="block truncate text-sm font-bold text-red-900 dark:text-red-100">{e.session ? `${iconFor(e.session)} ` : '📝 '}{e.subject}</span>
+              <span className="block text-xs text-red-700 dark:text-red-300">
                 {label}
                 {e.session?.room ? ` · Phòng ${e.session.room}` : ''}
                 {e.session?.teacher ? ` · ${e.session.teacher}` : ''}
               </span>
             </span>
             {e.date && (
-              <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${overdue ? 'bg-red-600 text-white' : 'bg-white text-red-700'}`}>
+              <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${overdue ? 'bg-red-600 text-white' : 'bg-white dark:bg-slate-900 text-red-700 dark:text-red-300'}`}>
                 {countdownLabel(e.date)}
               </span>
             )}

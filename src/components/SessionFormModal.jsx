@@ -1,4 +1,5 @@
 import { DAY_NAMES, PERIOD_TIMES, TYPES, sessionLabel, timeRange } from '../lib/time.js'
+import { ICON_OPTIONS } from '../lib/icons.js'
 import { Modal } from './Modal.jsx'
 import { Field } from './Field.jsx'
 
@@ -39,14 +40,14 @@ export function SessionFormModal({ form, onFormChange, formConflicts, onClose, o
             </select>
           </Field>
         </div>
-        <p className="text-xs text-slate-500">Giờ: {timeRange(Number(form.start), Number(form.end), times)} · Ca {sessionLabel(Number(form.start))}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">Giờ: {timeRange(Number(form.start), Number(form.end), times)} · Ca {sessionLabel(Number(form.start))}</p>
         {form.type === 'Thi' && (
           <Field label="Ngày thi (không bắt buộc)">
             <input type="date" value={form.examDate || ''} onChange={(e) => onFormChange({ ...form, examDate: e.target.value })} className="input" />
           </Field>
         )}
         {formConflicts.length > 0 && (
-          <div className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/60 px-3 py-2 text-sm text-red-700 dark:text-red-300">
             <b>⚠️ Trùng tiết với:</b>
             <ul className="list-disc pl-5">
               {formConflicts.map((s) => <li key={s.id}>{s.subject} — tiết {s.start}-{s.end}{s.room ? ` · ${s.room}` : ''}</li>)}
@@ -63,10 +64,31 @@ export function SessionFormModal({ form, onFormChange, formConflicts, onClose, o
             {TYPES.map((t) => <option key={t}>{t}</option>)}
           </select>
         </Field>
+        <Field label="Icon trang trí (không bắt buộc — để trống thì dùng icon mặc định theo loại)">
+          <div className="flex flex-wrap gap-1.5">
+            {ICON_OPTIONS.map((o) => (
+              <button
+                key={o.emoji || 'none'}
+                type="button"
+                title={o.label}
+                aria-label={`Icon: ${o.label}`}
+                aria-pressed={(form.icon || '') === o.emoji}
+                onClick={() => onFormChange({ ...form, icon: o.emoji })}
+                className={`rounded-lg border px-2 py-1.5 text-lg leading-none ${
+                  (form.icon || '') === o.emoji
+                    ? 'border-indigo-600 bg-indigo-600 text-white ring-1 ring-indigo-600'
+                    : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                {o.emoji || '—'}
+              </button>
+            ))}
+          </div>
+        </Field>
         <Field label="Ghi chú"><input value={form.note} onChange={(e) => onFormChange({ ...form, note: e.target.value })} placeholder="VD: Team code: 27adb02" className="input" /></Field>
         <div className="flex gap-2 pt-1">
           <button type="submit" className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Lưu</button>
-          <button type="button" onClick={onClose} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Hủy</button>
+          <button type="button" onClick={onClose} className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold">Hủy</button>
         </div>
       </form>
     </Modal>
