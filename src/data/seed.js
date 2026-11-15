@@ -5,11 +5,14 @@
 // mode (Part 9): 'theory' = lý thuyết, 'practice' = thực hành — chỉ có
 // ý nghĩa khi type là 'Học'. Hai buổi "Tiếng Việt thực hành" là thực
 // hành (đúng tên môn), 8 buổi HK1 còn lại và cả 6 buổi HK2 là lý thuyết.
+// Học kỳ mặc định (Part 11): 3 học kỳ, HK3 là học kỳ hè (trống) — xem
+// lib/semesters.js; người dùng chỉnh lại trong Cài đặt → Học kỳ.
 
-export const SEMESTERS = [
-  { id: 'hk1', name: 'HK1 — 2026-2027', note: 'Lịch thật từ web trường, tuần 05/10/2026' },
-  { id: 'hk2', name: 'HK2 — 2026-2027', note: 'Bản nháp từ Excel — chỉ có mã môn, chưa có tên đầy đủ / phòng / GV' },
-]
+// Cấu hình học kỳ mặc định dùng chung: 3 học kỳ, khoảng ngày là ước
+// lượng (xem lib/semesters.js) — giữ export cũ để code cũ không vỡ.
+import { DEFAULT_SEMESTERS } from '../lib/semesters.js'
+
+export const SEMESTERS = DEFAULT_SEMESTERS
 
 export const SEED = {
   hk1: [
@@ -107,4 +110,8 @@ export const SEED = {
     { id: 'hk2-5', subject: 'KTTKPM', code: 'KTTKPM', className: '', day: 5, start: 7, end: 9, room: '', teacher: '', note: 'Bản nháp HK2 — chưa có tên đầy đủ', type: 'Học', mode: 'theory' },
     { id: 'hk2-6', subject: 'KTTKPM', code: 'KTTKPM', className: '', day: 4, start: 13, end: 15, room: '', teacher: '', note: 'Bản nháp HK2 — chưa có tên đầy đủ', type: 'Học', mode: 'theory' },
   ],
+
+  // HK3 là học kỳ hè — không bắt buộc, chủ yếu học vượt / học lại.
+  // Lộc chưa đăng ký gì cho hè nên để trống (không bịa buổi nào).
+  hk3: [],
 }

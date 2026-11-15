@@ -31,9 +31,21 @@ function loadCollapsed() {
 // Sidebar trái (desktop): logo + điều hướng chính của app. Thu gọn được
 // về dạng chỉ icon (nhớ lựa chọn ở localStorage). Trên mobile (<md) không
 // dùng sidebar dọc — DashboardPage vẽ thanh tab ngang thay thế.
-// Chuyển học kỳ HK1/HK2 chỉ nằm ở sidebar (không còn bản sao ở header).
-export function Sidebar({ view, onViewChange, semester, onSemesterChange, theme, onOpenSettings, collapsed, onToggleCollapsed }) {
+// Chuyển học kỳ chỉ nằm ở sidebar (không còn bản sao ở header) — vẽ đủ
+// mọi học kỳ đã cấu hình (Part 11: mặc định 3, tối đa 8), học kỳ hiện
+// tại theo ngày được gắn chấm "Hiện tại".
+export function Sidebar({ view, onViewChange, semester, onSemesterChange, semesters = [], currentSemId, theme, onOpenSettings, collapsed, onToggleCollapsed }) {
   let lastSection = null
+  const currentSem = semesters.find((s) => s.id === currentSemId)
+  const selectedSem = semesters.find((s) => s.id === semester)
+  // Thu gọn: bấm để về học kỳ hiện tại; đang ở đó rồi thì chuyển sang học
+  // kỳ kế tiếp (xoay vòng) để vẫn đổi được học kỳ khi sidebar thu gọn.
+  function handleCollapsedSemester() {
+    if (!semesters.length) return
+    if (semester !== currentSemId && currentSemId) { onSemesterChange(currentSemId); return }
+    const i = semesters.findIndex((s) => s.id === semester)
+    onSemesterChange(semesters[(i + 1) % semesters.length].id)
+  }
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-border bg-surface md:flex ${
@@ -100,17 +112,29 @@ export function Sidebar({ view, onViewChange, semester, onSemesterChange, theme,
                 <span className="block truncate text-xs text-muted">IUH · Sinh viên</span>
               </span>
             </div>
-            <div className="flex rounded-lg bg-background p-1">
-              {[{ id: 'hk1', label: 'HK1' }, { id: 'hk2', label: 'HK2 · Nháp' }].map((s) => (
+            <div className="grid grid-cols-3 gap-1 rounded-lg bg-background p-1">
+              {semesters.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => onSemesterChange(s.id)}
-                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-bold ${semester === s.id ? 'bg-surface text-foreground shadow-card' : 'text-muted'}`}
+                  title={`${s.label}${s.id === currentSemId ? ' — học kỳ hiện tại' : ''}`}
+                  className={`relative min-w-0 rounded-md px-1 py-1.5 text-xs font-bold ${semester === s.id ? 'bg-surface text-foreground shadow-card' : 'text-muted hover:text-foreground'}`}
                 >
-                  {s.label}
+                  <span className="block truncate">{s.label}</span>
+                  {s.id === currentSemId && (
+                    <span className="mt-0.5 block text-[9px] font-bold leading-none text-primary">● Hiện tại</span>
+                  )}
                 </button>
               ))}
             </div>
+            {currentSem && semester !== currentSemId && (
+              <button
+                onClick={() => onSemesterChange(currentSemId)}
+                className="w-full rounded-lg px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10"
+              >
+                ⟲ Về {currentSem.label} (hiện tại)
+              </button>
+            )}
             <button
               onClick={theme.cycleMode}
               className="btn-ghost flex w-full items-center justify-center gap-2 px-2 py-1.5 text-xs"
@@ -123,11 +147,16 @@ export function Sidebar({ view, onViewChange, semester, onSemesterChange, theme,
         ) : (
           <>
             <button
-              onClick={() => onSemesterChange(semester === 'hk1' ? 'hk2' : 'hk1')}
-              title={`Học kỳ: ${semester === 'hk1' ? 'HK1' : 'HK2 · Nháp'} — bấm để đổi`}
-              className="flex w-full items-center justify-center rounded-lg bg-background py-2 text-xs font-bold text-foreground"
+              onClick={handleCollapsedSemester}
+              title={semester === currentSemId
+                ? `Học kỳ: ${selectedSem?.label || semester} (hiện tại) — bấm để sang học kỳ kế tiếp`
+                : `Đang xem ${selectedSem?.label || semester} — bấm để về ${currentSem?.label || 'học kỳ hiện tại'}`}
+              className="flex w-full flex-col items-center justify-center rounded-lg bg-background py-2 text-xs font-bold text-foreground"
             >
-              {semester === 'hk1' ? 'HK1' : 'HK2'}
+              <span className="max-w-full truncate px-1">{selectedSem?.label || semester}</span>
+              {semester === currentSemId && (
+                <span className="text-[9px] font-bold leading-none text-primary">● Hiện tại</span>
+              )}
             </button>
             <button
               onClick={theme.cycleMode}

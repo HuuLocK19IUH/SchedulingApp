@@ -35,7 +35,7 @@ export function SimulatorPage({ schedule, times, dark = false }) {
   const formConflicts = form ? findConflicts(form, sessions) : []
 
   function handleApply(plan) {
-    const semName = schedule.semester === 'hk2' ? 'HK2' : 'HK1'
+    const semName = schedule.semInfo?.label || schedule.semester
     if (!confirm(`Chốt "${plan.name}" làm lịch ${semName}?\nLịch ${semName} hiện tại sẽ bị thay bằng ${plan.sessions.length} buổi trong phương án này.`)) return
     schedule.applyPlan(plan.sessions, plan.name)
     setNotice(`Đã chốt "${plan.name}" làm lịch ${semName}. Qua tab Lịch học để xem.`)

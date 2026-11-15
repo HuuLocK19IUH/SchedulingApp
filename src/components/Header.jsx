@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { PresetSettings } from './PresetSettings.jsx'
+import { SemesterSettings } from './SemesterSettings.jsx'
 import { ThemeSettings } from './ThemeSettings.jsx'
 import {
   IconBell, IconCalendarDays, IconDownload, IconFolderOpen, IconImage, IconMonitor,
@@ -10,7 +11,7 @@ import {
 // Header gọn: tiêu đề view hiện tại + ô tìm kiếm kiểu command-palette +
 // nút sáng/tối + menu Cài đặt. Logo và điều hướng chính nằm ở Sidebar trái;
 // chuyển học kỳ HK1/HK2 chỉ nằm ở sidebar — header không còn bản sao nào.
-export function Header({ viewTitle, theme, settingsOpen, onSettingsOpenChange, onExportCSV, onExportBackup, onImportJSON, onRestoreSeed, onExportIcs, onExportPng, preset, reminders, onReminderToggle, onReminderMinutes, onRequestPermission, install, search, onSearchChange }) {
+export function Header({ viewTitle, theme, settingsOpen, onSettingsOpenChange, onExportCSV, onExportBackup, onImportJSON, onRestoreSeed, onExportIcs, onExportPng, preset, semesterSettings, reminders, onReminderToggle, onReminderMinutes, onRequestPermission, install, search, onSearchChange }) {
   const fileRef = useRef(null)
   const menuRef = useRef(null)
   const searchRef = useRef(null)
@@ -112,6 +113,15 @@ export function Header({ viewTitle, theme, settingsOpen, onSettingsOpenChange, o
             {settingsOpen && (
               <div role="menu" className="card absolute right-0 z-40 mt-2 max-h-[calc(100vh-5rem)] w-[calc(100vw-2rem)] max-w-xs overflow-y-auto p-2 sm:w-80">
                 {theme && <ThemeSettings theme={theme} />}
+                {semesterSettings && (
+                  <SemesterSettings
+                    semesters={semesterSettings.semesters}
+                    currentSemId={semesterSettings.currentSemId}
+                    counts={semesterSettings.counts}
+                    onSave={semesterSettings.onSave}
+                    onReset={semesterSettings.onReset}
+                  />
+                )}
                 <button onClick={() => run(onExportCSV)} className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-foreground transition-soft hover:bg-primary/10">
                   <IconDownload className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <span>Xuất CSV <span className="block text-xs font-normal text-muted">Tải lịch học kỳ này về file CSV</span></span>
@@ -130,12 +140,12 @@ export function Header({ viewTitle, theme, settingsOpen, onSettingsOpenChange, o
                 <button
                   onClick={() => {
                     onSettingsOpenChange(false)
-                    if (confirm('Khôi phục toàn bộ lịch gốc từ ảnh / Excel của Lộc? Các thay đổi của bạn sẽ mất.')) onRestoreSeed()
+                    if (confirm('Khôi phục toàn bộ lịch gốc từ ảnh / Excel của Lộc (về lại 3 học kỳ mặc định)? Các thay đổi của bạn sẽ mất.')) onRestoreSeed()
                   }}
                   className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 dark:text-red-400 transition-soft hover:bg-red-500/10"
                 >
                   <IconRotateCcw className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>Khôi phục gốc <span className="block text-xs font-normal text-red-400 dark:text-red-300">Xóa hết thay đổi, về lại lịch gốc</span></span>
+                  <span>Khôi phục gốc <span className="block text-xs font-normal text-red-400 dark:text-red-300">Xóa hết thay đổi, về lại lịch gốc (3 học kỳ mặc định)</span></span>
                 </button>
                 {onExportIcs && (
                   <button onClick={() => run(onExportIcs)} className="flex w-full items-start gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-foreground transition-soft hover:bg-primary/10">

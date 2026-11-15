@@ -36,11 +36,14 @@ npm run preview
 - Lưới tuần **Thứ 2 – Chủ nhật × Tiết 1–16**, đúng khung giờ IUH
   (Sáng 1–6, Chiều 7–12, Tối 13–16), mỗi môn một màu, bấm vào khối môn để xem
   mã lớp học phần, phòng, giảng viên, ghi chú.
-- Chuyển học kỳ **HK1 / HK2**.
+- Chuyển học kỳ (mặc định **HK1 / HK2 / HK3 · Hè** — xem mục "Học kỳ
+  tùy chỉnh" bên dưới).
   - HK1: lịch thật từ web sv.iuh.edu.vn, tuần 05/10/2026 — 10 buổi.
   - HK2: bản nháp từ file Excel của Lộc — 6 buổi, chỉ có mã môn
     (QLDA, CNMOI, AUTOMAT, KTTKPM), chưa có tên đầy đủ / phòng / GV.
     Lộc bổ sung sau khi đăng ký học phần HK2 xong.
+  - HK3: học kỳ hè — không bắt buộc, chủ yếu học vượt / học lại, đang
+    trống (chưa đăng ký gì).
 - Thêm / sửa / xóa buổi học, lịch thi, ca làm việc, sự kiện cá nhân.
   Bấm vào ô trống trên lưới là thêm đúng tiết đó.
 - **Cảnh báo trùng tiết** ngay khi thêm/sửa và trên lưới tuần.
@@ -96,9 +99,10 @@ chính dùng token (`bg-surface`, `border-border`, `text-foreground`,
 
 - **Sidebar:** chia nhóm HỌC TẬP / CÔNG CỤ / HỆ THỐNG, mục đang xem là
   pill màu nhấn có vạch chỉ bên trái, cuối sidebar có thẻ user "Nguyễn
-  Hữu Lộc · IUH" và chuyển học kỳ HK1/HK2 (chuyển học kỳ chỉ nằm ở
-  sidebar — không còn bản sao ở header). Nút sáng/tối ở sidebar chỉ
-  hiện đúng tên chế độ ("Sáng" / "Tối" / "Theo hệ thống").
+  Hữu Lộc · IUH" và chuyển học kỳ (mặc định HK1/HK2/HK3 · Hè, học kỳ
+  hiện tại gắn huy hiệu — chuyển học kỳ chỉ nằm ở sidebar, không còn
+  bản sao ở header). Nút sáng/tối ở sidebar chỉ hiện đúng tên chế độ
+  ("Sáng" / "Tối" / "Theo hệ thống").
 - **Header:** gọn lại — tiêu đề view + ô tìm kiếm kiểu command-palette
   (phím `/` để nhảy vào ô tìm), nút sáng/tối, nút Cài đặt.
 - **Thống kê kiểu Bento:** 4 thẻ có icon chip SVG, số lớn, nhãn và dòng
@@ -235,6 +239,37 @@ của palette môn — đã kiểm chứng tỉ lệ tương phản WCAG trên c
   [Hủy] quay lại xem chi tiết, [Xóa buổi] mới xóa thật). Cả Lịch học
   lẫn Mô phỏng đều được xác nhận vì dùng chung component.
 
+## Học kỳ tùy chỉnh (Part 11)
+
+- **Mặc định 3 học kỳ (IUH):** HK1 (01/09–15/01), HK2 (16/01–31/05),
+  HK3 · Hè (01/06–31/08). HK3 là học kỳ hè — không bắt buộc, chủ yếu
+  để học vượt / học lại, đang trống.
+- **Học kỳ hiện tại tự nhận theo ngày hôm nay:** mở app là tự chọn
+  đúng học kỳ theo khoảng ngày (15/11 → HK1, 01/02 → HK2, 01/07 →
+  HK3). Ngày rơi vào khoảng trống giữa các học kỳ thì lấy học kỳ sắp
+  tới gần nhất. Sidebar gắn huy hiệu "Hiện tại" cho học kỳ đó và có nút
+  "Về học kỳ hiện tại".
+- **Tự chỉnh trong Cài đặt → Học kỳ:** đổi tên, đổi khoảng ngày (tháng
+  + ngày, khoảng được quấn qua năm như HK1), thêm (tối đa 8 học kỳ) /
+  xóa học kỳ. Không xóa được học kỳ cuối cùng, cũng không xóa được học
+  kỳ còn buổi học (phải xóa các buổi trước đã). Sửa trong bản nháp rồi
+  bấm "Lưu học kỳ"; có nút "Khôi phục mặc định (3 học kỳ)".
+- **Khoảng ngày mặc định là ước lượng** cho lịch đại học Việt Nam,
+  KHÔNG phải ngày chính thức của IUH — sửa lại trong Cài đặt nếu lịch
+  trường bạn khác. Nhãn học kỳ không còn gắn năm ("HK1" thay cho "HK1
+  — 2026-2027") để khỏi lỗi thời sang năm sau.
+- **Không mất dữ liệu cũ:** dữ liệu buổi học vẫn ở
+  `xep-lich-hoc-v1` theo map id học kỳ; đọc dữ liệu cũ {hk1, hk2} thì
+  giữ nguyên cả hai và thêm `hk3: []`. Backup JSON dạng mới là
+  `{ version: 2, semesters, sessions }` (khôi phục cả cấu hình học kỳ);
+  nhập JSON chấp nhận cả dạng mới lẫn dạng cũ. Khôi phục gốc về lại
+  lịch gốc + 3 học kỳ mặc định. Xuất .ics gom buổi của mọi học kỳ đã
+  cấu hình (trước đây chỉ hard-code hk1/hk2); tên file CSV và tiêu đề
+  ảnh PNG dùng nhãn học kỳ thay cho `HK1`/`HK2` viết cứng.
+- **Mô phỏng:** "Chốt phương án" thay buổi của học kỳ ĐANG CHỌN (nhãn
+  lấy từ cấu hình, không còn `hk2 ? 'HK2' : 'HK1'`); phương án mẫu
+  "HK2 – bản nháp" giữ nguyên, không bịa thêm phương án mẫu cho HK3.
+
 ## Điều hướng
 
 Sidebar trái (desktop, rộng 240px, thu gọn còn 64px bằng nút thu gọn ở
@@ -242,9 +277,11 @@ cuối — lựa chọn được nhớ ở localStorage
 `schedulingapp-sidebar-v1`): logo + các mục chia nhóm HỌC TẬP (Lịch học,
 Lịch thi, Mô phỏng đăng ký), CÔNG CỤ (Giờ trống chung, Task & Deadline),
 HỆ THỐNG (Cài đặt); cuối sidebar có thẻ user "Nguyễn Hữu Lộc · IUH",
-chuyển học kỳ HK1/HK2 và nút sáng/tối. Trên điện thoại (<md) sidebar thành
-thanh tab ngang cuộn được ở đầu trang — không dùng hamburger, mọi mục
-đều thấy ngay.
+chuyển học kỳ (mặc định HK1/HK2/HK3 · Hè — học kỳ hiện tại gắn huy hiệu
+"Hiện tại", có nút "Về học kỳ hiện tại"; sidebar thu gọn thì bấm để về
+học kỳ hiện tại, đang ở đó rồi thì xoay sang học kỳ kế tiếp) và nút
+sáng/tối. Trên điện thoại (<md) sidebar thành thanh tab ngang cuộn được
+ở đầu trang — không dùng hamburger, mọi mục đều thấy ngay.
 
 ## Mô phỏng đăng ký
 
@@ -261,7 +298,7 @@ cho tới khi Lộc bấm **Chốt phương án này**.
 - **Bảng so sánh**: mỗi hàng là một tiêu chí (Điểm, Ngày lên trường, Tiết buổi tối,
   Tổng tiết, Cặp trùng, Giờ trống), mỗi cột là một phương án, ô xanh lá là tốt nhất hàng.
 - **Chốt phương án**: hỏi xác nhận rồi thay toàn bộ buổi của học kỳ hiện tại
-  (HK1/HK2 theo nút chuyển học kỳ) bằng các buổi trong phương án đó.
+  (theo nút chuyển học kỳ ở sidebar) bằng các buổi trong phương án đó.
 
 Phương án mẫu có sẵn (lấy đúng từ seed HK2, không bịa thêm): "HK2 – bản nháp"
 (QLDA, CNMOI, AUTOMAT, KTTKPM) và một phương án trống "Phương án B — trống".
@@ -410,6 +447,13 @@ push lên `main` là Vercel deploy lại, không cần token hay secret gì thê
   lưu khi trùng tiết với buổi khác (nêu rõ buổi trùng, dặn xóa trước
   rồi thêm lại), form Mô phỏng vẫn cho trùng để chấm điểm; xóa buổi
   phải xác nhận trong modal (Hủy / Xóa buổi).
+- [x] Phần 11 — Học kỳ tùy chỉnh (15/11/2026): mặc định 3 học kỳ
+  (HK1/HK2/HK3 · Hè, HK3 đang trống), học kỳ hiện tại tự nhận theo
+  ngày hôm nay (15/11 → HK1), Cài đặt → Học kỳ cho đổi tên / khoảng
+  ngày / thêm (tối đa 8) / xóa (chặn khi còn buổi hoặc là học kỳ cuối),
+  sidebar vẽ đủ các học kỳ với huy hiệu "Hiện tại" + nút về học kỳ
+  hiện tại, backup JSON v2 khôi phục cả cấu hình, dữ liệu cũ {hk1, hk2}
+  đọc được (thêm hk3 []), .ics/CSV/PNG dùng nhãn học kỳ.
 - [ ] Tiếp theo: OCR ảnh chụp lịch, preset giờ thật của các trường khác
   (ghi rõ nguồn), đồng bộ đám mây khi cần (xem bên dưới).
 
@@ -494,14 +538,17 @@ src/
                            # gắn class .dark lên <html>, theo hệ thống live)
   components/
     Header.jsx             # header gọn: tiêu đề view + ô tìm kiếm (phím "/")
-                           # + nút sáng/tối + menu Cài đặt (giao diện, nhắc lịch,
-                           # xuất .ics/PNG, cài app, khung giờ tiết) — menu điều
-                           # khiển từ DashboardPage
+                           # + nút sáng/tối + menu Cài đặt (giao diện, học kỳ,
+                           # nhắc lịch, xuất .ics/PNG, cài app, khung giờ tiết)
+                           # — menu điều khiển từ DashboardPage
     Sidebar.jsx            # sidebar trái: logo + điều hướng 5 mục chia nhóm
                            # HỌC TẬP / CÔNG CỤ / HỆ THỐNG, thẻ user, chuyển học
-                           # kỳ + sáng/tối ở cuối, thu gọn về chỉ icon
+                           # kỳ (đủ các học kỳ, huy hiệu "Hiện tại") + sáng/tối
+                           # ở cuối, thu gọn về chỉ icon
     ThemeSettings.jsx      # mục "Giao diện" trong menu Cài đặt (sáng/tối + nền)
     PresetSettings.jsx     # mục "Khung giờ tiết" trong menu Cài đặt (chọn preset / tự chỉnh)
+    SemesterSettings.jsx   # mục "Học kỳ" trong menu Cài đặt (đổi tên / khoảng
+                           # ngày / thêm / xóa học kỳ, tối đa 8)
     ExamList.jsx           # mục Lịch thi: buổi thi + task thi, đếm ngược
     FreeTimeFinder.jsx     # tìm giờ trống chung với bạn bè (lưu localStorage)
     StatsBar.jsx           # 4 thẻ thống kê kiểu Bento: icon + số + ngữ cảnh
@@ -522,11 +569,13 @@ src/
     Row.jsx                # một dòng "nhãn: giá trị" trong modal chi tiết
     Field.jsx              # một field có nhãn trong form
   data/
-    seed.js                # dữ liệu gốc HK1 + HK2, chuyển học kỳ
+    seed.js                # dữ liệu gốc HK1 + HK2 (+ HK3 hè trống), chuyển học kỳ
     presets.js             # preset khung giờ tiết: IUH (mặc định) + mẫu 50 phút
   lib/
     time.js                # giờ từng tiết, kiểm tra trùng tiết, ngày hôm nay,
                            # lần học tiếp theo, đếm ngược, kiểm tra khung giờ (hàm thuần)
+    semesters.js           # cấu hình học kỳ: mặc định 3, nhận học kỳ hiện
+                           # tại theo ngày, chuẩn hóa + migration dữ liệu cũ (hàm thuần)
     colors.js              # bảng màu theo môn (PALETTE sáng + tối, colorFor, TYPE_STYLE)
     icons.js               # icon emoji cho buổi học + icon mặc định theo loại (hàm thuần)
     ui-icons.jsx           # icon SVG inline kiểu Lucide cho UI chrome (không dependency)

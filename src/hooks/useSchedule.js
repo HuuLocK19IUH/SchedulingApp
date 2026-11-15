@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { SEED, SEMESTERS } from '../data/seed.js'
+import { SEED } from '../data/seed.js'
 import { conflictIds, timeRange, todayIndex, DAY_NAMES, PERIOD_TIMES } from '../lib/time.js'
 import { inferMode, modeLabel, normalizeMode, resolveMode } from '../lib/colors.js'
+import {
+  DEFAULT_SEMESTERS, SEMESTERS_STORAGE_KEY,
+  currentSemesterId, normalizeDataMap, normalizeSemesters, parseBackup,
+} from '../lib/semesters.js'
 import { download } from '../lib/download.js'
 import { buildIcs } from '../lib/ics.js'
 
@@ -12,12 +16,25 @@ export const EMPTY_FORM = {
   room: '', teacher: '', note: '', type: 'Học', examDate: '', icon: '',
 }
 
-function loadData() {
+// Cấu hình học kỳ (Part 11): đọc từ localStorage, sai/hỏng -> mặc định 3.
+function loadSemesters() {
+  try {
+    const raw = localStorage.getItem(SEMESTERS_STORAGE_KEY)
+    if (!raw) return DEFAULT_SEMESTERS.map((s) => ({ ...s }))
+    return normalizeSemesters(JSON.parse(raw))
+  } catch { return DEFAULT_SEMESTERS.map((s) => ({ ...s })) }
+}
+
+// Dữ liệu buổi học: map id học kỳ -> mảng buổi. Dạng cũ {hk1, hk2} vẫn
+// đọc được — chuẩn hóa thêm [] cho học kỳ nào chưa có (vd HK3 mới).
+// Dữ liệu hỏng -> dùng seed.
+function loadData(semesters) {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return structuredClone(SEED)
-    const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed.hk1) && Array.isArray(parsed.hk2)) return parsed
+    const map = normalizeDataMap(JSON.parse(raw), semesters)
+    if (!map) return structuredClone(SEED)
+    return map
   } catch { /* dữ liệu hỏng -> dùng seed */ }
   return structuredClone(SEED)
 }
@@ -47,16 +64,34 @@ export function parsePeriods(text) {
  * Trạng thái giao diện (tìm kiếm, lọc, modal đang mở...) nằm ở DashboardPage.
  */
 export function useSchedule(times = PERIOD_TIMES) {
-  const [data, setData] = useState(loadData)
-  const [semester, setSemester] = useState('hk1')
+  const [semesters, setSemesters] = useState(loadSemesters)
+  const [data, setData] = useState(() => loadData(loadSemesters()))
+  // Học kỳ đang chọn: chỉ là state phiên (không lưu) — lần mở đầu lấy
+  // theo ngày hôm nay (Part 11), không còn mặc định cứng 'hk1'.
+  const [semester, setSemester] = useState(() => {
+    const list = loadSemesters()
+    return currentSemesterId(list) || list[0].id
+  })
   const [notice, setNotice] = useState('')
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }, [data])
 
-  const sessions = data[semester]
-  const semInfo = SEMESTERS.find((s) => s.id === semester)
+  useEffect(() => {
+    try { localStorage.setItem(SEMESTERS_STORAGE_KEY, JSON.stringify(semesters)) } catch { /* bỏ qua */ }
+  }, [semesters])
+
+  // Học kỳ "hiện tại" theo ngày hôm nay — để sidebar gắn huy hiệu và để
+  // quay về khi học kỳ đang chọn bị xóa. Tính lại mỗi lần render (rẻ).
+  const currentSemId = currentSemesterId(semesters)
+  const sessions = data[semester] || []
+  const semInfo = semesters.find((s) => s.id === semester) || semesters[0]
+  const semesterCounts = useMemo(() => {
+    const counts = {}
+    for (const s of semesters) counts[s.id] = (data[s.id] || []).length
+    return counts
+  }, [data, semesters])
   const conflicts = useMemo(() => conflictIds(sessions), [sessions])
 
   const today = todayIndex()
@@ -74,6 +109,23 @@ export function useSchedule(times = PERIOD_TIMES) {
 
   function updateSemester(list) {
     saveData({ ...data, [semester]: list })
+  }
+
+  // --- Quản lý cấu hình học kỳ (Part 11) ---
+  // Đổi cấu hình: nếu học kỳ đang chọn không còn trong danh sách thì quay
+  // về học kỳ hiện tại theo ngày (hoặc học kỳ đầu danh sách).
+  function updateSemesters(next) {
+    const list = normalizeSemesters(next)
+    setSemesters(list)
+    if (!list.some((s) => s.id === semester)) {
+      setSemester(currentSemesterId(list) || list[0].id)
+    }
+  }
+
+  function resetSemesters() {
+    const list = DEFAULT_SEMESTERS.map((s) => ({ ...s }))
+    setSemesters(list)
+    setSemester(currentSemesterId(list) || list[0].id)
   }
 
   function upsertSession(values) {
@@ -134,19 +186,23 @@ export function useSchedule(times = PERIOD_TIMES) {
       timeRange(s.start, s.end, times), s.room, s.teacher, s.note, s.type,
       s.type === 'Học' ? modeLabel(resolveMode(s)) : '',
     ].map(esc).join(','))
-    download(`lich-hoc-${semester}.csv`, '\uFEFF' + [head, ...rows].join('\n'), 'text/csv')
+    // Tên file dùng nhãn học kỳ (Part 11) — bỏ ký tự lạ cho an toàn.
+    const fileLabel = (semInfo?.label || semester).replace(/[^\p{L}\p{N}]+/gu, '-')
+    download(`lich-hoc-${fileLabel}.csv`, '\uFEFF' + [head, ...rows].join('\n'), 'text/csv')
   }
 
-  // Xuất .ics: toàn bộ buổi cả 2 học kỳ + task có ngày hết hạn.
+  // Xuất .ics: toàn bộ buổi của MỌI học kỳ đã cấu hình + task có ngày hết hạn.
   // Task được truyền vào từ DashboardPage (hook này không giữ task).
   function exportIcs(tasks = []) {
-    const allSessions = [...(data.hk1 || []), ...(data.hk2 || [])]
+    const allSessions = semesters.flatMap((s) => data[s.id] || [])
     download('schedulingapp-lich-hoc.ics', buildIcs(allSessions, tasks, { times }), 'text/calendar')
     showNotice('Đã tải file .ics — import vào Google Calendar để đồng bộ.', 4000)
   }
 
   function exportBackup() {
-    download('lich-hoc-backup.json', JSON.stringify(data, null, 2), 'application/json')
+    // Dạng mới (Part 11): { version: 2, semesters, sessions } — nhập lại
+    // được cả cấu hình học kỳ, không chỉ buổi học.
+    download('lich-hoc-backup.json', JSON.stringify({ version: 2, semesters, sessions: data }, null, 2), 'application/json')
   }
 
   function importJSON(file) {
@@ -154,13 +210,21 @@ export function useSchedule(times = PERIOD_TIMES) {
     reader.onload = () => {
       try {
         const parsed = JSON.parse(reader.result)
-        if (!Array.isArray(parsed.hk1) || !Array.isArray(parsed.hk2)) throw new Error('bad')
-        for (const key of ['hk1', 'hk2']) {
-          for (const s of parsed[key]) {
+        // parseBackup phân biệt dạng mới {version: 2, semesters, sessions}
+        // với dạng cũ {hk1, hk2}; file lạ -> throw, KHÔNG xóa lịch.
+        const { semesters: nextSemesters, data: map } = parseBackup(parsed, semesters)
+        for (const list of Object.values(map)) {
+          for (const s of list) {
             if (!s.subject || typeof s.day !== 'number' || !s.start || !s.end) throw new Error('bad')
           }
         }
-        saveData(parsed)
+        if (nextSemesters !== semesters) {
+          setSemesters(nextSemesters)
+          if (!nextSemesters.some((s) => s.id === semester)) {
+            setSemester(currentSemesterId(nextSemesters) || nextSemesters[0].id)
+          }
+        }
+        saveData(map)
         showNotice('Đã khôi phục dữ liệu từ file JSON.', 4000)
       } catch {
         showNotice('File JSON không đúng định dạng backup của app.', 4000)
@@ -171,7 +235,11 @@ export function useSchedule(times = PERIOD_TIMES) {
 
   function restoreSeed() {
     saveData(structuredClone(SEED))
-    showNotice('Đã khôi phục lịch gốc.')
+    // Khôi phục gốc cũng về lại 3 học kỳ mặc định (Part 11).
+    const list = DEFAULT_SEMESTERS.map((s) => ({ ...s }))
+    setSemesters(list)
+    setSemester(currentSemesterId(list) || list[0].id)
+    showNotice('Đã khôi phục lịch gốc (3 học kỳ mặc định).')
   }
 
   // Chốt một phương án mô phỏng: thay toàn bộ buổi của học kỳ hiện tại
@@ -180,13 +248,15 @@ export function useSchedule(times = PERIOD_TIMES) {
   function applyPlan(list, planName) {
     const copied = list.map((s, i) => ({ ...s, id: `u-${Date.now()}-${i}` }))
     updateSemester(copied)
-    showNotice(`Đã chốt "${planName}" làm lịch ${semester === 'hk2' ? 'HK2' : 'HK1'}.`, 4000)
+    showNotice(`Đã chốt "${planName}" làm lịch ${semInfo?.label || semester}.`, 4000)
   }
 
   return {
     data,
     semester, setSemester,
-    sessions, semInfo, conflicts,
+    semesters, currentSemId, semInfo, semesterCounts,
+    updateSemesters, resetSemesters,
+    sessions, conflicts,
     today, tomorrow, daySessions,
     notice,
     upsertSession, deleteSession,

@@ -37,6 +37,8 @@ export function DashboardPage() {
   const schedule = useSchedule(preset.times)
   const {
     semester, setSemester, sessions, conflicts,
+    semesters, currentSemId, semInfo, semesterCounts,
+    updateSemesters, resetSemesters,
     today, tomorrow, daySessions, notice,
     upsertSession, deleteSession, importFromPaste,
     exportCSV, exportBackup, exportIcs, importJSON, restoreSeed,
@@ -98,6 +100,8 @@ export function DashboardPage() {
         onViewChange={setView}
         semester={semester}
         onSemesterChange={setSemester}
+        semesters={semesters}
+        currentSemId={currentSemId}
         theme={theme}
         onOpenSettings={() => setSettingsOpen(true)}
         collapsed={sidebarCollapsed}
@@ -128,8 +132,12 @@ export function DashboardPage() {
           onExportCSV={exportCSV}
           onExportBackup={exportBackup}
           onExportIcs={() => exportIcs(tasksApi.tasks)}
-          onExportPng={() => exportTimetablePng(sessions, preset.times, semester === 'hk2' ? 'HK2' : 'HK1')}
+          onExportPng={() => exportTimetablePng(sessions, preset.times, semInfo?.label || semester)}
           preset={preset}
+          semesterSettings={{
+            semesters, currentSemId, counts: semesterCounts,
+            onSave: updateSemesters, onReset: resetSemesters,
+          }}
           onImportJSON={importJSON}
           onRestoreSeed={restoreSeed}
           reminders={reminders}
