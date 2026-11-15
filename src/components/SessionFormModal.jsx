@@ -1,11 +1,30 @@
+import { useEffect, useState } from 'react'
 import { DAY_NAMES, PERIOD_TIMES, TYPES, sessionLabel, timeRange } from '../lib/time.js'
 import { inferMode, MODE_LABELS } from '../lib/colors.js'
 import { ICON_OPTIONS } from '../lib/icons.js'
 import { Modal } from './Modal.jsx'
 import { Field } from './Field.jsx'
 
-export function SessionFormModal({ form, onFormChange, formConflicts, onClose, onSave, times = PERIOD_TIMES }) {
+// Quy tắc không trùng tiết (Part 10): form thêm/sửa ở Lịch học CHẶN lưu
+// khi trùng tiết với buổi khác (xem formConflicts) — người dùng phải xóa
+// buổi trùng trước rồi thêm lại. allowOverlap=true chỉ dùng cho form ở
+// Mô phỏng đăng ký: phương án là giả định, trùng tiết được CHẤM ĐIỂM
+// (-20/cặp) chứ không chặn — nên form ở đó giữ cảnh báo cũ, vẫn lưu được.
+// Không chặn ở tầng hook/import: khôi phục seed, dán hàng loạt, nhập
+// CSV/JSON và chốt phương án đều đi đường khác và giữ nguyên (lịch gốc
+// HK1 của Lộc vốn có một cặp trùng thật ở Thứ 6 tiết 9).
+export function SessionFormModal({ form, onFormChange, formConflicts, onClose, onSave, times = PERIOD_TIMES, allowOverlap = false }) {
+  // Lỗi nộp form (hiện trong modal, KHÔNG dùng alert): tên trống hoặc
+  // bị chặn vì trùng tiết. Tự xóa khi Lộc đổi thứ/tiết/tên (đổi sang
+  // khung không trùng thì lỗi cũ không còn ý nghĩa).
+  // Hook phải đứng TRƯỚC `if (!form) return null` (luật Hooks).
+  const [submitError, setSubmitError] = useState('')
+  useEffect(() => { setSubmitError('') }, [form?.id, form?.day, form?.start, form?.end, form?.subject])
   if (!form) return null
+  // Chặn lưu khi trùng buổi KHÁC: formConflicts đã loại buổi đang sửa
+  // theo id (findConflicts), nên sửa mà không đổi khung giờ thì không
+  // bị chặn; tiết kề nhau (1–3 rồi 4–6) không giao nhau nên vẫn lưu được.
+  const blocked = !allowOverlap && formConflicts.length > 0
   // Hình thức đang chọn: đã chọn rõ thì giữ, chưa có thì đoán theo tên
   // môn (chứa "thực hành" -> thực hành, còn lại lý thuyết). Chỉ hiện
   // khi loại là Học — Thi / Làm việc / Cá nhân không có hình thức.
@@ -17,7 +36,9 @@ export function SessionFormModal({ form, onFormChange, formConflicts, onClose, o
         className="mt-4 space-y-3"
         onSubmit={(e) => {
           e.preventDefault()
-          if (!form.subject.trim()) { alert('Nhập tên môn trước đã.'); return }
+          if (!form.subject.trim()) { setSubmitError('Nhập tên môn trước đã.'); return }
+          if (blocked) { setSubmitError('Không thể lưu vì trùng tiết — xóa buổi trùng trước rồi thêm lại.'); return }
+          setSubmitError('')
           onSave({ ...form, subject: form.subject.trim(), start: Number(form.start), end: Number(form.end), day: Number(form.day) })
         }}
       >
@@ -53,11 +74,23 @@ export function SessionFormModal({ form, onFormChange, formConflicts, onClose, o
         )}
         {formConflicts.length > 0 && (
           <div className="rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/60 px-3 py-2 text-sm text-red-700 dark:text-red-300">
-            <b>⚠️ Trùng tiết với:</b>
-            <ul className="list-disc pl-5">
-              {formConflicts.map((s) => <li key={s.id}>{s.subject} — tiết {s.start}-{s.end}{s.room ? ` · ${s.room}` : ''}</li>)}
-            </ul>
-            Vẫn lưu được nếu Lộc cố tình xếp trùng, nhưng nên kiểm tra lại.
+            {blocked ? (
+              <>
+                <b>⛔ Không thể lưu buổi này — trùng tiết với:</b>
+                <ul className="list-disc pl-5">
+                  {formConflicts.map((s) => <li key={s.id}>{s.subject} — {DAY_NAMES[s.day]} · Tiết {s.start}-{s.end}{s.room ? ` · ${s.room}` : ''}</li>)}
+                </ul>
+                Xóa buổi trùng trước rồi thêm lại.
+              </>
+            ) : (
+              <>
+                <b>⚠️ Trùng tiết với:</b>
+                <ul className="list-disc pl-5">
+                  {formConflicts.map((s) => <li key={s.id}>{s.subject} — tiết {s.start}-{s.end}{s.room ? ` · ${s.room}` : ''}</li>)}
+                </ul>
+                Vẫn lưu được nếu Lộc cố tình xếp trùng, nhưng nên kiểm tra lại.
+              </>
+            )}
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
@@ -114,6 +147,9 @@ export function SessionFormModal({ form, onFormChange, formConflicts, onClose, o
           </div>
         </Field>
         <Field label="Ghi chú"><input value={form.note} onChange={(e) => onFormChange({ ...form, note: e.target.value })} placeholder="VD: Team code: 27adb02" className="input" /></Field>
+        {submitError && (
+          <p role="alert" className="rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/60 px-3 py-2 text-sm font-semibold text-red-700 dark:text-red-300">{submitError}</p>
+        )}
         <div className="flex gap-2 pt-1">
           <button type="submit" className="flex-1 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">Lưu</button>
           <button type="button" onClick={onClose} className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-semibold">Hủy</button>

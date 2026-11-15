@@ -210,6 +210,31 @@ của palette môn — đã kiểm chứng tỉ lệ tương phản WCAG trên c
   nhanh và dán từ web trường giữ nguyên định dạng, hình thức đoán theo
   tên môn.
 
+## Sửa lỗi tương tác (Part 10)
+
+- **Bấm buổi học lại mở form thêm mới (lỗi xếp chồng):** các ô trống
+  trong lưới có class `relative` (positioned), còn khối môn trước đây
+  là static — theo thứ tự vẽ của CSS, phần tử positioned vẽ TRÊN phần
+  tử không positioned trong cùng stacking context, bất kể thứ tự DOM,
+  nên 112 ô trống trong suốt đè lên khối môn và chặn mọi cú bấm. Đã
+  sửa: khối môn thêm `relative` (render sau ô trống trong DOM nên vẽ
+  trên) + `stopPropagation()` ở onClick. Bấm buổi học giờ mở đúng
+  modal chi tiết; bấm ô trống mới mở form thêm buổi.
+- **Chặn lưu trùng tiết (chỉ ở form Lịch học):** bấm Lưu khi form trùng
+  tiết với buổi khác thì KHÔNG lưu — hộp đỏ trong form ghi rõ buổi
+  trùng (môn + thứ + tiết + phòng) và dặn xóa buổi trùng trước rồi
+  thêm lại. Sửa buổi mà không đổi khung giờ thì không bị chặn (đã loại
+  chính buổi đang sửa theo id); tiết kề nhau (1–3 rồi 4–6) vẫn lưu
+  được. Nút Lưu vẫn hiện — bấm khi đang trùng thì lỗi ở lại, không gọi
+  lưu. Lỗi nhập tên trống trước đây dùng `alert()` giờ cũng hiện trong
+  modal. KHÔNG chặn: khôi phục seed, dán hàng loạt, nhập CSV/JSON,
+  chốt phương án — và form ở Mô phỏng vẫn cho trùng (phương án là giả
+  định, trùng tiết được chấm điểm −20/cặp chứ không chặn).
+- **Xác nhận xóa:** bấm "Xóa" trong modal chi tiết không xóa ngay nữa
+  mà chuyển sang hộp xác nhận trong cùng modal (tên + thứ/tiết buổi,
+  [Hủy] quay lại xem chi tiết, [Xóa buổi] mới xóa thật). Cả Lịch học
+  lẫn Mô phỏng đều được xác nhận vì dùng chung component.
+
 ## Điều hướng
 
 Sidebar trái (desktop, rộng 240px, thu gọn còn 64px bằng nút thu gọn ở
@@ -379,6 +404,12 @@ push lên `main` là Vercel deploy lại, không cần token hay secret gì thê
   trường `mode` + đoán mặc định theo tên môn ("thực hành" -> thực
   hành), form Sửa buổi có mục Hình thức (chỉ khi loại Học), chú thích
   3 màu trên lưới tuần, CSV thêm cột Hình thức.
+- [x] Phần 10 — Sửa lỗi tương tác (15/11/2026): bấm buổi học mở đúng
+  modal chi tiết (khối môn thêm `relative` để vẽ trên 112 ô trống
+  `relative` đang chặn bấm + `stopPropagation()`); form Lịch học chặn
+  lưu khi trùng tiết với buổi khác (nêu rõ buổi trùng, dặn xóa trước
+  rồi thêm lại), form Mô phỏng vẫn cho trùng để chấm điểm; xóa buổi
+  phải xác nhận trong modal (Hủy / Xóa buổi).
 - [ ] Tiếp theo: OCR ảnh chụp lịch, preset giờ thật của các trường khác
   (ghi rõ nguồn), đồng bộ đám mây khi cần (xem bên dưới).
 

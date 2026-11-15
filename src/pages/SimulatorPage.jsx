@@ -167,10 +167,15 @@ export function SimulatorPage({ schedule, times, dark = false }) {
         onEdit={() => { setForm({ ...detail }); setDetail(null) }}
         onDelete={() => { removeSession(activePlanId, detail.id); setDetail(null) }}
       />
+      {/* Form thêm/sửa lớp dự kiến: phương án là GIẢ ĐỊNH nên trùng tiết
+          được CHẤM ĐIỂM (-20/cặp) chứ không chặn — allowOverlap giữ cảnh
+          báo cũ, vẫn lưu được (Part 10). Form ở Lịch học thì ngược lại:
+          trùng tiết là CHẶN lưu (mặc định allowOverlap=false). */}
       <SessionFormModal times={times}
         form={form}
         onFormChange={setForm}
         formConflicts={formConflicts}
+        allowOverlap
         onClose={() => setForm(null)}
         onSave={(values) => { upsertSession(activePlanId, values); setForm(null) }}
       />

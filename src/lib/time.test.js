@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  PERIOD_TIMES, conflictIds, currentPeriodIndex, nextOccurrence, nextUpcomingSession,
+  PERIOD_TIMES, conflictIds, currentPeriodIndex, findConflicts, nextOccurrence, nextUpcomingSession,
   periodEndMinutes, periodStartMinutes, timeRange, validatePeriodTimes,
 } from './time.js'
 
@@ -36,6 +36,36 @@ describe('trùng tiết', () => {
   it('không báo trùng khi khác ngày hoặc không giao tiết', () => {
     expect(conflictIds([MOBILE, OTHER_DAY])).toEqual(new Set())
     expect(conflictIds([{ ...MOBILE, start: 1, end: 3 }, TIENG_VIET])).toEqual(new Set())
+  })
+})
+
+// findConflicts — logic chặn lưu ở form (Part 10): trùng với buổi KHÁC
+// thì chặn, trùng với chính mình (đang sửa) thì không.
+describe('findConflicts (chặn lưu khi trùng)', () => {
+  it('loại chính buổi đang sửa theo id — sửa mà không đổi khung giờ thì không bị chặn', () => {
+    expect(findConflicts(MOBILE, [MOBILE, TIENG_VIET])).toEqual([TIENG_VIET])
+    expect(findConflicts(MOBILE, [MOBILE])).toEqual([])
+  })
+
+  it('buổi mới (chưa có id) trùng tiết với buổi đã có thì bị chặn', () => {
+    const fresh = { subject: 'Môn mới', day: 4, start: 8, end: 10 }
+    expect(findConflicts(fresh, [MOBILE, TIENG_VIET]).map((s) => s.id)).toEqual(['hk1-8', 'hk1-9'])
+  })
+
+  it('tiết kề nhau (1–3 rồi 4–6) không giao nhau nên không bị chặn', () => {
+    const a = { id: 'a', subject: 'A', day: 0, start: 1, end: 3 }
+    const b = { id: 'b', subject: 'B', day: 0, start: 4, end: 6 }
+    expect(findConflicts(a, [b])).toEqual([])
+    expect(findConflicts(b, [a])).toEqual([])
+  })
+
+  it('chung đúng 1 tiết (9) vẫn tính là trùng — như cặp Thứ 6 tiết 9', () => {
+    expect(findConflicts(TIENG_VIET, [MOBILE])).toEqual([MOBILE])
+    expect(findConflicts(MOBILE, [TIENG_VIET])).toEqual([TIENG_VIET])
+  })
+
+  it('cùng khung giờ nhưng khác ngày thì không trùng', () => {
+    expect(findConflicts(MOBILE, [OTHER_DAY])).toEqual([])
   })
 })
 
