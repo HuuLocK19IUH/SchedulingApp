@@ -33,20 +33,32 @@ export function WeekGrid({
           className="grid min-w-[1024px]"
           style={{ gridTemplateColumns: '76px repeat(7, minmax(0, 1fr))', gridTemplateRows: '42px repeat(16, 56px)' }}
         >
-          <div className="flex items-center justify-center border-b border-border text-xs font-bold text-muted">Ca / Tiết</div>
-          {/* Tiêu đề ngày: MỘT hàng duy nhất (flex-row + whitespace-nowrap).
-              Trước đây là flex-col nên huy hiệu "Hôm nay" rớt xuống dòng
-              thứ hai dưới tên ngày — đúng thứ Lộc thấy ở cột Chủ nhật vào
-              ngày Chủ nhật. Cột rộng tối thiểu 1024px (≈135px/cột) để tên
-              ngày + huy hiệu nằm vừa một hàng. */}
+          {/* Ô góc "Ca / Tiết": đặt rõ ràng cột 1, hàng 1. */}
+          <div className="flex items-center justify-center border-b border-border text-xs font-bold text-muted" style={{ gridColumn: 1, gridRow: 1 }}>Ca / Tiết</div>
+          {/* Tiêu đề ngày: MỘT hàng duy nhất (flex-row + whitespace-nowrap),
+              ĐẶT RÕ RÀNG cột i+2, hàng 1 cho cả 8 ô tiêu đề.
+              NGUYÊN NHÂN THẬT của lỗi "Chủ nhật xuống dòng" (Part 8): trước
+              đây 8 ô tiêu đề KHÔNG có vị trí rõ ràng (auto-placement), còn
+              nền nhấn cột hôm nay (div bên dưới) chiếm gridRow '1 / 19' —
+              tức chiếm luôn ô tiêu đề của cột hôm nay. CSS Grid đặt ô đã
+              đặt rõ trước, rồi mới auto-place các ô còn lại vào chỗ trống:
+              tiêu đề của cột hôm nay (Chủ nhật khi hôm nay là Chủ nhật)
+              không vào được hàng 1 nên rớt xuống hàng 2, cột 1 — đúng chỗ
+              Lộc thấy "Chủ nhật + Hôm nay" nằm trên "T1 · Sáng". Lỗi này
+              xảy ra với BẤT KỲ ngày nào vào đúng ngày đó (thứ 2 cũng rớt
+              tiêu đề vào thứ 2...). Part 7 chỉ sửa flex-col → flex-row
+              nên không chạm tới nguyên nhân này. Cột rộng tối thiểu
+              1024px (≈135px/cột) để tên ngày + huy hiệu vừa một hàng. */}
           {DAY_NAMES.map((d, i) => (
-            <div key={d} className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap border-b border-border text-xs font-bold lg:text-sm ${i === today ? 'text-primary' : 'text-foreground'}`}>
+            <div key={d} className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap border-b border-border text-xs font-bold lg:text-sm ${i === today ? 'text-primary' : 'text-foreground'}`} style={{ gridColumn: i + 2, gridRow: 1 }}>
               <span className="whitespace-nowrap">{d}</span>
               {i === today && <span className="shrink-0 rounded-full bg-primary px-2 py-px text-[10px] font-bold text-white">Hôm nay</span>}
             </div>
           ))}
+          {/* Gutter tiết: cũng đặt rõ ràng cột 1, hàng p+2 — trước đây
+              auto-place nên chỉ đúng nhờ con trỏ đang ở đúng chỗ. */}
           {PERIOD_TIMES.map((t, p) => (
-            <div key={p} className="flex flex-col items-center justify-center border-b border-border text-center">
+            <div key={p} className="flex flex-col items-center justify-center border-b border-border text-center" style={{ gridColumn: 1, gridRow: p + 2 }}>
               <span className="text-[11px] font-bold text-foreground">T{p + 1}{p === 0 ? ' · Sáng' : p === 6 ? ' · Chiều' : p === 12 ? ' · Tối' : ''}</span>
               <span className="text-[10px] text-muted">{t}</span>
               {p === nowPeriod && (
@@ -54,11 +66,15 @@ export function WeekGrid({
               )}
             </div>
           ))}
-          {/* Nền nhấn cột hôm nay (nằm dưới các ô, không chặn bấm). */}
+          {/* Nền nhấn cột hôm nay (nằm dưới các ô, không chặn bấm).
+              CHỈ phủ các hàng thân lưới (hàng 2–17, tức 16 tiết), KHÔNG
+              bao giờ phủ hàng 1 (tiêu đề) — trước đây là '1 / 19' nên
+              chiếm luôn ô tiêu đề của cột hôm nay và đẩy tiêu đề đó
+              xuống hàng 2, cột 1 (xem ghi chú ở tiêu đề ngày). */}
           <div
             aria-hidden="true"
             className="pointer-events-none bg-primary/5"
-            style={{ gridColumn: today + 2, gridRow: '1 / 19' }}
+            style={{ gridColumn: today + 2, gridRow: '2 / 18' }}
           />
           {/* Vạch "đang học" ngang qua cột hôm nay ở tiết hiện tại. */}
           {nowPeriod >= 0 && (

@@ -144,7 +144,7 @@ export function DashboardPage() {
         {view === 'simulator' ? (
           <SimulatorPage schedule={schedule} times={preset.times} dark={theme.dark} />
         ) : view === 'exams' ? (
-          <main className="mx-auto max-w-7xl px-4 py-5">
+          <main className="mx-auto flex min-h-[calc(100vh-10rem)] max-w-7xl flex-col px-4 py-5">
             <h2 className="text-xl font-extrabold text-red-700 dark:text-red-300">Lịch thi</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Riêng các buổi thi và task thi — có ngày thi thì đếm ngược, chưa có ngày thì xếp sau.

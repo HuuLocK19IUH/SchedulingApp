@@ -40,3 +40,26 @@ export function freeSlotsByDay(mySessions = [], friendsSessions = []) {
   for (const s of all) byDay[s.day].push(s)
   return byDay
 }
+
+/**
+ * Khung trống DÀI NHẤT của MỖI ngày (mỗi ngày tối đa 1 khung, ≥ minPeriods
+ * tiết), xếp theo độ dài giảm dần, hòa thì ngày sớm trước.
+ * Khác findFreeSlots: không cắt top-N, nên ngày nào cũng có mặt nếu còn
+ * khung đủ dài — Chủ nhật trống cả ngày không bao giờ bị rớt khỏi danh
+ * sách chỉ vì 5 ngày khác cũng trống 16 tiết (lỗi cũ: FreeTimeFinder
+ * lấy findFreeSlots rồi .slice(0, 5), mà 6 ngày trống 16 tiết xếp trước
+ * Chủ nhật theo thứ tự ngày, nên Chủ nhật — ngày thứ 6 trong số đó —
+ * bị cắt mất, cùng với Thứ 2).
+ */
+export function longestFreeSlotPerDay(mySessions = [], friendsSessions = [], opts = {}) {
+  const minPeriods = opts.minPeriods || 2
+  const all = findFreeSlots(mySessions, friendsSessions, { minPeriods })
+  const best = new Map()
+  for (const s of all) {
+    const cur = best.get(s.day)
+    if (!cur || s.periods > cur.periods || (s.periods === cur.periods && s.start < cur.start)) {
+      best.set(s.day, s)
+    }
+  }
+  return [...best.values()].sort((a, b) => b.periods - a.periods || a.day - b.day)
+}

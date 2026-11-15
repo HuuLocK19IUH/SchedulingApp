@@ -32,8 +32,12 @@ export function ExamList({ sessions, tasks, times, onSelectSession, onAddExam })
   })
 
   if (all.length === 0) {
+    // my-auto: khi chưa có lịch thi, hộp trống căn giữa theo chiều dọc
+    // trong phần còn lại của trang (main là flex-col, cao tối thiểu
+    // gần bằng viewport) thay vì dính lên đầu và bỏ lại khoảng xanh
+    // trống lớn phía dưới.
     return (
-      <div className="mt-5 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60 p-5 text-sm text-red-800 dark:text-red-200">
+      <div className="my-auto rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60 p-5 text-sm text-red-800 dark:text-red-200">
         <p className="font-bold">Chưa có lịch thi nào.</p>
         <p className="mt-1">Thêm một buổi loại “Thi” (có thể nhập thêm Ngày thi trong form) hoặc thêm một task loại “Thi” có ngày hết hạn — nó sẽ hiện ở đây với đếm ngược.</p>
         {onAddExam && (

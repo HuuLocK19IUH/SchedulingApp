@@ -138,6 +138,43 @@ chính dùng token (`bg-surface`, `border-border`, `text-foreground`,
   "Khôi phục lịch gốc"); tên môn/phòng/GV dài được cắt gọn + `title`
   để rê chuột vẫn đọc đủ.
 
+## Sửa lỗi UI (Part 8)
+
+- **Cột "Chủ nhật" bị đẩy khỏi hàng tiêu đề (nguyên nhân thật):** Part 7
+  đoán sai — không phải do flex-col. Nguyên nhân thật: nền nhấn cột hôm
+  nay trong `WeekGrid.jsx` có `gridRow: '1 / 19'` nên chiếm luôn ô tiêu
+  đề của cột hôm nay, trong khi 8 ô tiêu đề (và 16 ô gutter tiết) đều
+  auto-placement. CSS Grid đặt ô có vị trí rõ trước, rồi mới xếp các ô
+  auto-place vào chỗ còn trống — tiêu đề của cột hôm nay (Chủ nhật khi
+  hôm nay là Chủ nhật) không vào được hàng 1 nên rớt xuống hàng 2, cột
+  1, đúng chỗ "Chủ nhật + Hôm nay" nằm trên "T1 · Sáng" trong ảnh Lộc
+  chụp; đồng thời 16 ô gutter tiết cũng bị đẩy xuống một hàng. Lỗi này
+  xảy ra với BẤT KỲ ngày nào vào đúng ngày đó. Đã sửa: nền nhấn chỉ phủ
+  các hàng thân lưới (`gridRow: '2 / 18'`), cả 8 ô tiêu đề đặt rõ ràng
+  (`gridColumn: i+2`, `gridRow: 1`), 16 ô gutter tiết đặt rõ ràng
+  (`gridColumn: 1`, `gridRow: p+2`) — trong lưới tuần không còn ô nào
+  auto-placement nên không thể lệch nữa. Lưới thử ở Mô phỏng dùng chung
+  `WeekGrid` nên được sửa theo. Vạch "Đang học" đã đặt rõ ràng từ trước
+  nên giữ nguyên.
+- **Ô tìm kiếm: KHÔNG sửa** — Lộc đã xác nhận "đã ok". Kiểm tra bằng số:
+  input `pl-10` (40px) > icon kính lúp `left-3` + rộng 16px (kết thúc ở
+  28px) → chừa 12px; `pr-10` (40px) > gợi ý phím `/` (~21px) và nút xóa
+  (~20px) ở mép phải → chừa 7–10px. Chữ không thể chạy xuống dưới icon
+  hay gợi ý. Ảnh Figma phóng to thấy "Tì" bị che là đọc nhầm (ảnh chụp
+  ở độ phân giải thấp).
+- **Giờ trống chung thiếu Chủ nhật:** danh sách "Khung giờ trống dài
+  nhất" lấy `findFreeSlots` rồi `.slice(0, 5)` — có 6 ngày trống 16 tiết
+  (Thứ 3–Chủ nhật) xếp trước Chủ nhật theo thứ tự ngày nên Chủ nhật
+  (ngày thứ 6 trong số đó) bị cắt mất, cùng với Thứ 2. Đã thêm hàm
+  `longestFreeSlotPerDay` (mỗi ngày tối đa 1 khung dài nhất, không cắt
+  top-N) và đổi tiêu đề thành "Khung giờ trống dài nhất mỗi ngày
+  (≥ 2 tiết)" để luật hiển thị rõ ràng: Chủ nhật hiện "Tiết 1–16 —
+  trống 16 tiết", Thứ 2 hiện "Tiết 10–16 — trống 7 tiết".
+- **Thêm:** hộp trống của tab Lịch thi căn giữa theo chiều dọc trong phần
+  còn lại của trang (trước đây dính lên đầu, bỏ lại khoảng xanh trống
+  lớn phía dưới). Tab Lịch thi không có lưới tuần nên không có gì liên
+  quan tới Chủ nhật ở đó — không thêm lưới thi giả.
+
 ## Điều hướng
 
 Sidebar trái (desktop, rộng 240px, thu gọn còn 64px bằng nút thu gọn ở
@@ -292,6 +329,15 @@ push lên `main` là Vercel deploy lại, không cần token hay secret gì thê
   chip lọc cuộn ngang trên mobile, widget Hôm nay hiện buổi tiếp theo
   khi hôm nay trống, banner trùng tiết rõ hơn, trạng thái trống có nút
   làm luôn, cắt gọn tên môn/phòng/GV dài.
+- [x] Phần 8 — Sửa lỗi UI (15/11/2026): nguyên nhân thật của cột "Chủ
+  nhật" bị đẩy khỏi hàng tiêu đề — nền nhấn cột hôm nay chiếm
+  `gridRow: '1 / 19'` nên chiếm luôn ô tiêu đề của cột hôm nay trong khi
+  các ô tiêu đề auto-placement (đã sửa: nền nhấn chỉ phủ hàng thân lưới
+  `2 / 18`, mọi ô tiêu đề + gutter tiết đặt vị trí rõ ràng); ô tìm kiếm
+  KHÔNG sửa vì Lộc đã xác nhận ok và kiểm tra bằng số thấy không còn
+  chỗ chồng (pl-10 = 40px > icon kết thúc ở 28px); Giờ trống chung
+  thiếu Chủ nhật do `.slice(0, 5)` cắt mất (đã đổi sang khung dài nhất
+  mỗi ngày, không cắt top-N); hộp trống Lịch thi căn giữa theo chiều dọc.
 - [ ] Tiếp theo: OCR ảnh chụp lịch, preset giờ thật của các trường khác
   (ghi rõ nguồn), đồng bộ đám mây khi cần (xem bên dưới).
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { DAY_NAMES, timeRange } from '../lib/time.js'
-import { findFreeSlots, freeSlotsByDay } from '../lib/freeTime.js'
+import { longestFreeSlotPerDay, freeSlotsByDay } from '../lib/freeTime.js'
 import { parseQuickPaste } from '../lib/importers.js'
 
 const FRIENDS_KEY = 'schedulingapp-friends-v1'
@@ -31,8 +31,11 @@ export function FreeTimeFinder({ mySessions, times }) {
     () => friends.flatMap((f) => f.sessions.map((s) => ({ ...s, friend: f.name }))),
     [friends],
   )
+  // Khung trống dài nhất MỖI ngày (mỗi ngày tối đa 1 khung) — không cắt
+  // top-N: cắt top-5 từng làm Chủ nhật biến mất khỏi danh sách (6 ngày
+  // trống 16 tiết xếp trước nó theo thứ tự ngày).
   const topSlots = useMemo(
-    () => findFreeSlots(mySessions, friendsSessions, { minPeriods: 2 }),
+    () => longestFreeSlotPerDay(mySessions, friendsSessions, { minPeriods: 2 }),
     [mySessions, friendsSessions],
   )
   const byDay = useMemo(
@@ -94,12 +97,12 @@ export function FreeTimeFinder({ mySessions, times }) {
       <button onClick={addFriend} className="mt-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white">+ Thêm bạn</button>
       {message && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</p>}
 
-      <h3 className="mt-5 font-bold">Khung giờ trống dài nhất (≥ 2 tiết)</h3>
+      <h3 className="mt-5 font-bold">Khung giờ trống dài nhất mỗi ngày (≥ 2 tiết)</h3>
       {topSlots.length === 0 ? (
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Không còn khung trống ≥ 2 tiết trong tuần — thử giảm buổi bận hoặc họp vào khung 1 tiết bên dưới.</p>
       ) : (
         <ul className="mt-2 space-y-1.5">
-          {topSlots.slice(0, 5).map((s, i) => (
+          {topSlots.map((s, i) => (
             <li key={i} className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 px-3 py-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
               {DAY_NAMES[s.day]} · Tiết {s.start}-{s.end} ({timeRange(s.start, s.end, times)}) — trống {s.periods} tiết, cả nhóm rảnh
             </li>
