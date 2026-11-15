@@ -54,3 +54,30 @@ describe('parseCsvTsv', () => {
     expect(sessions[0]).toMatchObject({ subject: 'Thống kê', day: 3, start: 10, end: 12 })
   })
 })
+
+describe('hình thức (Part 9) trong import', () => {
+  it('dán nhanh: tên chứa "thực hành" -> practice, còn lại theory', () => {
+    const { sessions } = parseQuickPaste(
+      'Tiếng Việt thực hành | Thứ 3 | 7-9 | TT.TEAMS | Nguyễn Thị Đức\nLập trình WWW (Java) | Thứ 2 | 4-6 | H3.1.1 | Đặng Thị Thu Hà',
+    )
+    expect(sessions).toHaveLength(2)
+    expect(sessions[0]).toMatchObject({ mode: 'practice' })
+    expect(sessions[1]).toMatchObject({ mode: 'theory' })
+  })
+
+  it('CSV: cột Hình thức ghi rõ thì giữ, sai/trống thì đoán theo tên môn', () => {
+    const text = 'Môn,Thứ,Tiết,Hình thức\nMôn X,Thứ 2,1-3,Thực hành\nTiếng Việt thực hành,Thứ 3,7-9,\nMôn Y,Thứ 4,1-3,abc'
+    const { sessions, failed } = parseCsvTsv(text)
+    expect(failed).toHaveLength(0)
+    expect(sessions).toHaveLength(3)
+    expect(sessions[0]).toMatchObject({ mode: 'practice' })
+    expect(sessions[1]).toMatchObject({ mode: 'practice' })
+    expect(sessions[2]).toMatchObject({ mode: 'theory' })
+  })
+
+  it('CSV không có cột Hình thức vẫn đoán theo tên môn', () => {
+    const text = 'Môn,Thứ,Tiết\nTiếng Việt thực hành,Thứ 3,7-9'
+    const { sessions } = parseCsvTsv(text)
+    expect(sessions[0]).toMatchObject({ mode: 'practice' })
+  })
+})

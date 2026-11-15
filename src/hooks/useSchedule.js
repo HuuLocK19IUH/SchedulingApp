@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SEED, SEMESTERS } from '../data/seed.js'
 import { conflictIds, timeRange, todayIndex, DAY_NAMES, PERIOD_TIMES } from '../lib/time.js'
+import { inferMode, modeLabel, normalizeMode, resolveMode } from '../lib/colors.js'
 import { download } from '../lib/download.js'
 import { buildIcs } from '../lib/ics.js'
 
@@ -76,11 +77,14 @@ export function useSchedule(times = PERIOD_TIMES) {
   }
 
   function upsertSession(values) {
-    const list = values.id
-      ? sessions.map((s) => (s.id === values.id ? values : s))
-      : [...sessions, { ...values, id: `u-${Date.now()}` }]
+    // Chuẩn hóa hình thức trước khi lưu (Part 9): buổi Học giữ mode đã
+    // chọn rõ, chưa có thì đoán theo tên môn; buổi không phải Học bỏ mode.
+    const normalized = normalizeMode(values)
+    const list = normalized.id
+      ? sessions.map((s) => (s.id === normalized.id ? normalized : s))
+      : [...sessions, { ...normalized, id: `u-${Date.now()}` }]
     updateSemester(list)
-    showNotice(values.id ? 'Đã lưu thay đổi.' : 'Đã thêm buổi mới.')
+    showNotice(normalized.id ? 'Đã lưu thay đổi.' : 'Đã thêm buổi mới.')
   }
 
   function deleteSession(id) {
@@ -108,6 +112,9 @@ export function useSchedule(times = PERIOD_TIMES) {
         subject: parts[0], code: '', className: '',
         day, start: periods[0], end: periods[1],
         room: parts[3] || '', teacher: parts[4] || '', note: '', type: 'Học',
+        // Hình thức đoán theo tên môn (Part 9): chứa "thực hành" thì
+        // thực hành, còn lại lý thuyết — sửa lại trong form Sửa buổi.
+        mode: inferMode(parts[0]),
       })
     }
     if (added.length) updateSemester([...sessions, ...added])
@@ -117,11 +124,15 @@ export function useSchedule(times = PERIOD_TIMES) {
   }
 
   function exportCSV() {
-    const head = 'Môn,Mã LHP,Lớp,Thứ,Tiết bắt đầu,Tiết kết thúc,Giờ,Phòng,Giảng viên,Ghi chú,Loại'
+    // Cột "Hình thức" (Part 9): Lý thuyết / Thực hành cho buổi Học,
+    // để trống cho buổi không phải Học. Đặt cuối để không làm lệch thứ
+    // tự cột cũ khi mở bằng Excel.
+    const head = 'Môn,Mã LHP,Lớp,Thứ,Tiết bắt đầu,Tiết kết thúc,Giờ,Phòng,Giảng viên,Ghi chú,Loại,Hình thức'
     const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
     const rows = sessions.map((s) => [
       s.subject, s.code, s.className, DAY_NAMES[s.day], s.start, s.end,
       timeRange(s.start, s.end, times), s.room, s.teacher, s.note, s.type,
+      s.type === 'Học' ? modeLabel(resolveMode(s)) : '',
     ].map(esc).join(','))
     download(`lich-hoc-${semester}.csv`, '\uFEFF' + [head, ...rows].join('\n'), 'text/csv')
   }

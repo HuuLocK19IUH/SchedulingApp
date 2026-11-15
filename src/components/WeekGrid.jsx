@@ -1,7 +1,28 @@
 import { DAY_NAMES, DAY_SHORT, PERIOD_TIMES, currentPeriodIndex, timeRange } from '../lib/time.js'
-import { colorFor } from '../lib/colors.js'
+import { cellStyleFor, KIND_BG } from '../lib/colors.js'
 import { iconFor } from '../lib/icons.js'
 import { SessionCard } from './SessionCard.jsx'
+
+// Chú thích màu ô (Part 9): một hàng gọn, hiện cả trên lưới desktop lẫn
+// xem theo ngày trên mobile — nền mã hóa hình thức, viền trái mã hóa môn.
+export function ModeLegend({ dark = false }) {
+  const items = [
+    { kind: KIND_BG.practice, label: 'Thực hành' },
+    { kind: KIND_BG.theory, label: 'Lý thuyết' },
+    { kind: KIND_BG.exam, label: 'Thi' },
+  ]
+  return (
+    <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-muted" aria-label="Chú thích màu ô: xanh lá là thực hành, xám nhạt là lý thuyết, vàng nhạt là thi">
+      <span className="text-foreground">Màu ô:</span>
+      {items.map(({ kind, label }) => (
+        <span key={label} className="flex items-center gap-1.5">
+          <span className="inline-block h-3.5 w-3.5 rounded border border-border" style={{ background: dark ? kind.darkBg : kind.bg }} />
+          {label}
+        </span>
+      ))}
+    </div>
+  )
+}
 
 export function WeekGrid({
   sessions, filteredIds, conflicts, today,
@@ -27,6 +48,8 @@ export function WeekGrid({
           </div>
         </div>
       )}
+      {/* Chú thích màu ô theo hình thức — hiện cả desktop lẫn mobile. */}
+      <ModeLegend dark={dark} />
       {/* Lưới tuần — desktop */}
       <div className="card timetable-scroll mt-5 hidden p-3 md:block">
         <div
@@ -121,9 +144,12 @@ export function WeekGrid({
             </div>
           )}
           {daySessions(mobileDay).filter((s) => filteredIds.has(s.id)).map((s) => {
-            const c = colorFor(s.subject, dark)
+            // Nền ô theo hình thức (Part 9) như trên lưới desktop; viền
+            // trái vẫn là màu môn. Chữ giữ text-foreground/text-muted
+            // (đọc được trên cả 3 nền sáng + tối).
+            const c = cellStyleFor(s, dark)
             return (
-              <button key={s.id} onClick={() => onSelect(s)} className="card flex w-full items-start gap-3 p-3 text-left transition-soft hover:-translate-y-px hover:shadow-card-hover motion-reduce:transform-none">
+              <button key={s.id} onClick={() => onSelect(s)} className="flex w-full items-start gap-3 rounded-xl border border-border p-3 text-left transition-soft hover:-translate-y-px hover:shadow-card-hover motion-reduce:transform-none" style={{ background: c.bg }}>
                 <span className="h-full min-h-10 w-1.5 rounded-full" style={{ background: c.border }} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-bold text-foreground">{iconFor(s)} {s.subject}</span>

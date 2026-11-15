@@ -1,5 +1,5 @@
 import { DAY_NAMES, sessionLabel, timeRange } from '../lib/time.js'
-import { TYPE_STYLE } from '../lib/colors.js'
+import { TYPE_STYLE, modeLabel, resolveMode } from '../lib/colors.js'
 import { iconFor } from '../lib/icons.js'
 import { Modal } from './Modal.jsx'
 import { Row } from './Row.jsx'
@@ -15,6 +15,9 @@ export function SessionDetailModal({ session, isConflict, onClose, onEdit, onDel
       <dl className="mt-4 space-y-2 text-sm">
         <Row label="Thứ" value={`${DAY_NAMES[session.day]} · Tiết ${session.start}-${session.end} (${sessionLabel(session.start)})`} />
         <Row label="Giờ" value={timeRange(session.start, session.end, times)} />
+        {session.type === 'Học' && (
+          <Row label="Hình thức" value={modeLabel(resolveMode(session))} />
+        )}
         {session.type === 'Thi' && session.examDate && (
           <Row label="Ngày thi" value={new Date(`${session.examDate}T00:00:00`).toLocaleDateString('vi-VN')} />
         )}

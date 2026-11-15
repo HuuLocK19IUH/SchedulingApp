@@ -1,11 +1,14 @@
 import { DAY_NAMES, countdownLabel, daysUntil, timeRange } from '../lib/time.js'
+import { cellStyleFor } from '../lib/colors.js'
 import { iconFor } from '../lib/icons.js'
 
 // Tab "Lịch thi": liệt kê riêng các buổi loại Thi + task loại Thi,
 // xếp theo ngày (có ngày trước, sớm nhất trước; chưa có ngày xếp sau).
 // Các buổi thi vẫn hiện trên lưới tuần bình thường (màu đỏ) — tab này
 // chỉ là một góc nhìn riêng, không thay thế lưới.
-export function ExamList({ sessions, tasks, times, onSelectSession, onAddExam }) {
+// Nền hàng buổi thi (Part 9): vàng nhạt như ô thi trên lưới; task thi
+// (không phải buổi học) giữ nền đỏ cũ để phân biệt.
+export function ExamList({ sessions, tasks, times, onSelectSession, onAddExam, dark = false }) {
   const exams = (sessions || [])
     .filter((s) => s.type === 'Thi')
     .map((s) => ({
@@ -62,11 +65,16 @@ export function ExamList({ sessions, tasks, times, onSelectSession, onAddExam })
             : 'Chưa có ngày'
         const rest = e.date || !e.session ? '' : ' — chưa nhập ngày thi'
         const overdue = e.date && daysUntil(e.date) < 0
+        // Hàng buổi thi: nền vàng theo hình thức thi; hàng task thi giữ
+        // nền đỏ cũ. Chữ đỏ giữ nguyên — đã đọc được trên nền vàng ở cả
+        // hai chế độ (đỏ-900 trên vàng-100, đỏ-100 trên hổ phách-900).
+        const rowBg = e.session ? cellStyleFor(e.session, dark).bg : undefined
         return (
           <button
             key={`${e.kind}-${e.id}`}
             onClick={() => e.kind === 'session' && onSelectSession?.(e.session)}
-            className="flex w-full items-center gap-3 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60 p-4 text-left shadow-sm hover:bg-red-100/60"
+            className="flex w-full items-center gap-3 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/60 p-4 text-left shadow-sm hover:brightness-95 dark:hover:brightness-110"
+            style={rowBg ? { background: rowBg } : undefined}
           >
             <span className="shrink-0 rounded-lg bg-red-600 px-2.5 py-1 text-xs font-extrabold text-white">THI</span>
             <span className="min-w-0 flex-1">

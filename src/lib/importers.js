@@ -2,6 +2,7 @@
 // Mọi parser đều trả về { sessions, failed: [{ line, reason }] }.
 // Thiếu thông tin bắt buộc (tên môn, thứ, tiết) -> vào failed với lý do,
 // KHÔNG tự đoán thứ, không tự đoán tiết.
+import { normalizeMode } from './colors.js'
 
 export function parseDay(text) {
   if (text == null) return null
@@ -38,7 +39,11 @@ function newSession(fields) {
 }
 
 function cleanSession(s) {
-  return {
+  // Hình thức (Part 9): mode ghi rõ thì giữ, chưa có / sai thì đoán theo
+  // tên môn (chỉ chứa "thực hành" mới là thực hành); buổi không phải Học
+  // thì bỏ mode. Dán nhanh và dán từ web trường không có cột hình thức
+  // nên luôn rơi vào nhánh đoán theo tên môn.
+  const cleaned = {
     ...s,
     subject: (s.subject || '').trim(),
     code: (s.code || '').trim(),
@@ -48,6 +53,18 @@ function cleanSession(s) {
     note: (s.note || '').trim(),
     type: s.type || 'Học',
   }
+  return normalizeMode(cleaned)
+}
+
+// Đọc cột "Hình thức" trong CSV: "Thực hành"/"practice" -> practice,
+// "Lý thuyết"/"theory" -> theory; giá trị khác hoặc trống -> undefined
+// (cleanSession sẽ đoán theo tên môn).
+export function parseMode(text) {
+  const t = String(text || '').trim().toLowerCase()
+  if (!t) return undefined
+  if (t.includes('thực hành') || t === 'practice' || t === 'th') return 'practice'
+  if (t.includes('lý thuyết') || t === 'theory' || t === 'lt') return 'theory'
+  return undefined
 }
 
 // (a) Dán nhanh — cùng định dạng với nhập nhanh trên dashboard:
@@ -179,6 +196,7 @@ const HEADER_ALIASES = {
   className: ['lớp', 'class'],
   note: ['ghi chú', 'note'],
   type: ['loại', 'type'],
+  mode: ['hình thức', 'mode'],
 }
 
 function findHeaderIndex(header, keys) {
@@ -196,7 +214,7 @@ export function parseCsvTsv(text) {
 
   const sep = rawLines.some((l) => l.includes('\t')) ? '\t' : ','
   let rows = rawLines.map((l) => splitRow(l, sep))
-  let col = { subject: 0, day: 1, start: 2, end: 3, room: 4, teacher: 5, code: 6, className: -1, note: -1, type: -1 }
+  let col = { subject: 0, day: 1, start: 2, end: 3, room: 4, teacher: 5, code: 6, className: -1, note: -1, type: -1, mode: -1 }
   const first = rows[0].map((h) => h.toLowerCase())
   const hasHeader = Object.values(HEADER_ALIASES).some((keys) => findHeaderIndex(first, keys) >= 0)
   if (hasHeader) {
@@ -212,6 +230,7 @@ export function parseCsvTsv(text) {
       className: findHeaderIndex(first, HEADER_ALIASES.className),
       note: findHeaderIndex(first, HEADER_ALIASES.note),
       type: findHeaderIndex(first, HEADER_ALIASES.type),
+      mode: findHeaderIndex(first, HEADER_ALIASES.mode),
     }
     rows = rows.slice(1)
   }
@@ -241,6 +260,7 @@ export function parseCsvTsv(text) {
       day, start: periods[0], end: periods[1],
       room: get(col.room), teacher: get(col.teacher),
       note: get(col.note), type: get(col.type) || 'Học',
+      mode: col.mode >= 0 ? parseMode(get(col.mode)) : undefined,
     })))
   }
   return { sessions, failed }

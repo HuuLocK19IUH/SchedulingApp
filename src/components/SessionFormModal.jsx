@@ -1,10 +1,15 @@
 import { DAY_NAMES, PERIOD_TIMES, TYPES, sessionLabel, timeRange } from '../lib/time.js'
+import { inferMode, MODE_LABELS } from '../lib/colors.js'
 import { ICON_OPTIONS } from '../lib/icons.js'
 import { Modal } from './Modal.jsx'
 import { Field } from './Field.jsx'
 
 export function SessionFormModal({ form, onFormChange, formConflicts, onClose, onSave, times = PERIOD_TIMES }) {
   if (!form) return null
+  // Hình thức đang chọn: đã chọn rõ thì giữ, chưa có thì đoán theo tên
+  // môn (chứa "thực hành" -> thực hành, còn lại lý thuyết). Chỉ hiện
+  // khi loại là Học — Thi / Làm việc / Cá nhân không có hình thức.
+  const shownMode = form.mode === 'practice' || form.mode === 'theory' ? form.mode : inferMode(form.subject)
   return (
     <Modal onClose={onClose}>
       <h3 className="text-lg font-extrabold">{form.id ? 'Sửa buổi' : 'Thêm buổi mới'}</h3>
@@ -64,6 +69,29 @@ export function SessionFormModal({ form, onFormChange, formConflicts, onClose, o
             {TYPES.map((t) => <option key={t}>{t}</option>)}
           </select>
         </Field>
+        {form.type === 'Học' && (
+          <Field label="Hình thức">
+            <div className="flex gap-2" role="radiogroup" aria-label="Hình thức buổi học">
+              {(['theory', 'practice']).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  role="radio"
+                  aria-checked={shownMode === m}
+                  onClick={() => onFormChange({ ...form, mode: m })}
+                  className={`flex-1 rounded-xl border px-3 py-2 text-sm font-bold transition-soft ${
+                    shownMode === m
+                      ? 'border-indigo-600 bg-indigo-600 text-white ring-1 ring-indigo-600'
+                      : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {MODE_LABELS[m]}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Mặc định đoán theo tên môn (chứa “thực hành” thì là Thực hành) — Lộc sửa lại ở đây nếu đoán sai.</p>
+          </Field>
+        )}
         <Field label="Icon trang trí (không bắt buộc — để trống thì dùng icon mặc định theo loại)">
           <div className="flex flex-wrap gap-1.5">
             {ICON_OPTIONS.map((o) => (

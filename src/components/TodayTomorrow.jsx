@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DAY_NAMES, timeRange, sessionStatusToday, inMinutesLabel, nextOccurrence, nextUpcomingSession, formatDateLocal, countdownLabel } from '../lib/time.js'
-import { colorFor } from '../lib/colors.js'
+import { cellStyleFor } from '../lib/colors.js'
 import { iconFor } from '../lib/icons.js'
 
 function statusLabel(session, now, times) {
@@ -37,8 +37,8 @@ export function TodayTomorrow({ today, tomorrow, daySessions, conflicts, onSelec
             <div className="mt-2">
               <p className="text-sm text-muted">Không có buổi học.</p>
               {d === today && next && (
-                <button onClick={() => onSelect(next.session)} className="mt-2 flex w-full items-center gap-3 rounded-xl border border-border px-3 py-2 text-left transition-soft hover:bg-primary/5">
-                  <span className="h-9 w-1.5 shrink-0 rounded-full" style={{ background: colorFor(next.session.subject, dark).border }} />
+                <button onClick={() => onSelect(next.session)} className="mt-2 flex w-full items-center gap-3 rounded-xl border border-border px-3 py-2 text-left transition-soft hover:bg-primary/5" style={{ background: cellStyleFor(next.session, dark).bg }}>
+                  <span className="h-9 w-1.5 shrink-0 rounded-full" style={{ background: cellStyleFor(next.session, dark).border }} />
                   <span className="min-w-0 flex-1">
                     <span className="block text-xs font-bold text-primary">Buổi tiếp theo · {countdownLabel(formatDateLocal(next.date), now)}</span>
                     <span className="block truncate text-sm font-semibold text-foreground">{iconFor(next.session)} {next.session.subject}</span>
@@ -50,13 +50,15 @@ export function TodayTomorrow({ today, tomorrow, daySessions, conflicts, onSelec
           ) : (
             <ul className="mt-2 space-y-2">
               {daySessions(d).map((s) => {
-                const c = colorFor(s.subject, dark)
+                // Nền hàng theo hình thức (Part 9) như ô trên lưới; viền
+                // trái vẫn là màu môn. Chữ giữ text-foreground/text-muted.
+                const c = cellStyleFor(s, dark)
                 const status = d === today ? statusLabel(s, now, times) : ''
                 const ongoing = d === today && sessionStatusToday(s, now, times) === 'ongoing'
                 const done = d === today && sessionStatusToday(s, now, times) === 'done'
                 return (
                   <li key={s.id}>
-                    <button onClick={() => onSelect(s)} className="flex w-full items-center gap-3 rounded-xl border border-border px-3 py-2 text-left transition-soft hover:bg-primary/5">
+                    <button onClick={() => onSelect(s)} className="flex w-full items-center gap-3 rounded-xl border border-border px-3 py-2 text-left transition-soft hover:bg-primary/5" style={{ background: c.bg }}>
                       <span className="h-9 w-1.5 shrink-0 rounded-full" style={{ background: c.border }} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-foreground">{iconFor(s)} {s.subject}</span>

@@ -175,6 +175,41 @@ chính dùng token (`bg-surface`, `border-border`, `text-foreground`,
   lớn phía dưới). Tab Lịch thi không có lưới tuần nên không có gì liên
   quan tới Chủ nhật ở đó — không thêm lưới thi giả.
 
+## Màu ô theo hình thức (Part 9)
+
+Mỗi buổi học trên lưới có nền ô theo **hình thức**, Lộc yêu cầu (nói
+muộn, từ đầu quên dặn):
+
+- **Thực hành — xanh lá nhạt** (`#dcfce7`, dark `#14532d`)
+- **Lý thuyết — xám nhạt** (`#f1f5f9`, dark `#334155`)
+- **Thi — vàng nhạt** (`#fef9c3`, dark `#78350f`)
+
+Quy tắc: nền mã hóa hình thức, còn **viền trái vẫn là màu môn** (tự sinh
+từ tên môn như trước) nên các môn vẫn phân biệt được. Chữ giữ màu chữ
+của palette môn — đã kiểm chứng tỉ lệ tương phản WCAG trên cả 3 nền
+(sáng + tối): cặp tệ nhất 6.08:1, trên chuẩn AA 4.5:1. Buổi 'Làm việc' /
+'Cá nhân' giữ nền theo môn như trước (Lộc không yêu cầu đổi).
+
+- **Trường `mode`:** `'theory'` (lý thuyết) / `'practice'` (thực hành),
+  chỉ có ý nghĩa khi loại là 'Học'; buổi Thi luôn vàng bất kể mode.
+  Buổi cũ (localStorage / JSON backup cũ) chưa có mode vẫn hiện đúng —
+  app đoán theo tên môn thay vì crash.
+- **Đoán mặc định theo tên môn:** tên chứa "thực hành" thì là thực
+  hành, còn lại là lý thuyết. Với lịch thật của Lộc, chỉ 2 buổi "Tiếng
+  Việt thực hành" (Thứ 3 tiết 7–9, Thứ 6 tiết 9–10) là thực hành, 8
+  buổi HK1 còn lại và cả 6 buổi HK2 là lý thuyết. Đoán sai thì sửa lại
+  trong form Sửa buổi (mục "Hình thức" chỉ hiện khi loại là Học).
+- **Chỗ hiện màu:** ô trên lưới tuần desktop + Mô phỏng (dùng chung
+  `WeekGrid`), xem theo ngày trên mobile, widget "Hôm nay học gì" /
+  "Ngày mai", hàng buổi thi trong tab Lịch thi, ảnh PNG xuất ra.
+  Chú thích 3 màu nằm ngay trên lưới tuần. Chi tiết buổi hiện dòng
+  "Hình thức: Lý thuyết / Thực hành" với buổi Học.
+- **Nhập/xuất:** JSON backup mang đủ cả object nên mode giữ nguyên.
+  Xuất CSV thêm cột "Hình thức" ở cuối (trống với buổi không phải Học).
+  Nhập CSV nhận cột "Hình thức" (thiếu/sai thì đoán theo tên môn); dán
+  nhanh và dán từ web trường giữ nguyên định dạng, hình thức đoán theo
+  tên môn.
+
 ## Điều hướng
 
 Sidebar trái (desktop, rộng 240px, thu gọn còn 64px bằng nút thu gọn ở
@@ -338,6 +373,12 @@ push lên `main` là Vercel deploy lại, không cần token hay secret gì thê
   chỗ chồng (pl-10 = 40px > icon kết thúc ở 28px); Giờ trống chung
   thiếu Chủ nhật do `.slice(0, 5)` cắt mất (đã đổi sang khung dài nhất
   mỗi ngày, không cắt top-N); hộp trống Lịch thi căn giữa theo chiều dọc.
+- [x] Phần 9 — Màu ô theo hình thức (15/11/2026): thực hành nền xanh
+  lá, lý thuyết nền xám nhạt, thi nền vàng nhạt; viền trái vẫn màu môn,
+  chữ giữ màu palette (tương phản tệ nhất 6.08:1, trên chuẩn AA 4.5:1);
+  trường `mode` + đoán mặc định theo tên môn ("thực hành" -> thực
+  hành), form Sửa buổi có mục Hình thức (chỉ khi loại Học), chú thích
+  3 màu trên lưới tuần, CSV thêm cột Hình thức.
 - [ ] Tiếp theo: OCR ảnh chụp lịch, preset giờ thật của các trường khác
   (ghi rõ nguồn), đồng bộ đám mây khi cần (xem bên dưới).
 

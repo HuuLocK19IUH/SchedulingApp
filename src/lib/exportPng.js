@@ -2,7 +2,7 @@
 // (không dùng html2canvas). Vẽ tay: tiêu đề, cột Thứ 2–CN, hàng tiết 1–16
 // với giờ từ preset đang dùng, khối môn tô màu giống SessionCard.
 import { DAY_NAMES, PERIOD_TIMES } from './time.js'
-import { colorFor } from './colors.js'
+import { cellStyleFor } from './colors.js'
 import { download } from './download.js'
 
 const CANVAS_W = 1600
@@ -90,9 +90,10 @@ export function exportTimetablePng(sessions = [], times = PERIOD_TIMES, semester
       }
     }
 
-    // Khối môn.
+    // Khối môn — màu ô theo hình thức (Part 9) giống SessionCard:
+    // nền theo loại buổi, viền trái màu môn, chữ màu palette môn.
     for (const s of sessions) {
-      const c = colorFor(s.subject)
+      const c = cellStyleFor(s)
       const x = LABEL_W + s.day * colW + 4
       const y = HEADER_H + (s.start - 1) * ROW_H + 4
       const w = colW - 8

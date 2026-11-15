@@ -150,7 +150,7 @@ export function DashboardPage() {
               Riêng các buổi thi và task thi — có ngày thi thì đếm ngược, chưa có ngày thì xếp sau.
               Các buổi thi vẫn hiện trên lưới tuần ở tab Lịch học.
             </p>
-            <ExamList sessions={sessions} tasks={tasksApi.tasks} times={preset.times} onSelectSession={setDetail} onAddExam={() => setForm({ ...EMPTY_FORM, type: 'Thi' })} />
+            <ExamList sessions={sessions} tasks={tasksApi.tasks} times={preset.times} dark={theme.dark} onSelectSession={setDetail} onAddExam={() => setForm({ ...EMPTY_FORM, type: 'Thi' })} />
           </main>
         ) : view === 'freetime' ? (
           <main className="mx-auto max-w-7xl px-4 py-5">

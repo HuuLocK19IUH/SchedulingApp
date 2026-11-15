@@ -1,12 +1,13 @@
-import { colorFor, TYPE_STYLE } from '../lib/colors.js'
+import { cellStyleFor, TYPE_STYLE } from '../lib/colors.js'
 import { iconFor } from '../lib/icons.js'
 import { PERIOD_TIMES, timeRange } from '../lib/time.js'
 
 // Một khối môn trên lưới tuần (desktop). Đặt bằng gridColumn/gridRow
-// theo thứ và khoảng tiết của buổi. Viền trái là thanh nhấn màu môn,
-// giờ + phòng tách dòng riêng để đọc nhanh.
+// theo thứ và khoảng tiết của buổi. Nền ô mã hóa HÌNH THỨC (Part 9:
+// thực hành xanh lá, lý thuyết xám nhạt, thi vàng nhạt), viền trái là
+// thanh nhấn màu môn, giờ + phòng tách dòng riêng để đọc nhanh.
 export function SessionCard({ session, isConflict, onSelect, dark = false, times = PERIOD_TIMES }) {
-  const c = colorFor(session.subject, dark)
+  const c = cellStyleFor(session, dark)
   return (
     <button
       onClick={() => onSelect(session)}
