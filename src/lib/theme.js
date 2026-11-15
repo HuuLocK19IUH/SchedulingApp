@@ -49,7 +49,7 @@ export function backgroundStyle(background, customColor, dark) {
 }
 
 export const THEME_MODES = [
-  { id: 'light', label: '☀️ Sáng', icon: '☀️' },
-  { id: 'dark', label: '🌙 Tối', icon: '🌙' },
-  { id: 'system', label: '💻 Theo hệ thống', icon: '💻' },
+  { id: 'light', label: 'Sáng' },
+  { id: 'dark', label: 'Tối' },
+  { id: 'system', label: 'Theo hệ thống' },
 ]

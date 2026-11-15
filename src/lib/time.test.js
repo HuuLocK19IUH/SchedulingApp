@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  PERIOD_TIMES, conflictIds, nextOccurrence, periodEndMinutes,
+  PERIOD_TIMES, conflictIds, currentPeriodIndex, nextOccurrence, periodEndMinutes,
   periodStartMinutes, timeRange, validatePeriodTimes,
 } from './time.js'
 
@@ -50,6 +50,19 @@ describe('nextOccurrence', () => {
     // Đã qua giờ bắt đầu thì sang tuần sau.
     const late = nextOccurrence({ day: 0, start: 1 }, new Date(2026, 10, 16, 7, 0))
     expect(late.getDate()).toBe(23)
+  })
+})
+
+describe('currentPeriodIndex', () => {
+  it('trả về tiết đang diễn ra, -1 khi ngoài giờ học', () => {
+    // 6:45 -> tiết 1 (6:30-7:20); 7:20 -> tiết 2 (bắt đầu đúng 7:20).
+    expect(currentPeriodIndex(new Date(2026, 10, 16, 6, 45))).toBe(0)
+    expect(currentPeriodIndex(new Date(2026, 10, 16, 7, 20))).toBe(1)
+    // 21:30 trở đi và 5:00 sáng đều ngoài giờ học.
+    expect(currentPeriodIndex(new Date(2026, 10, 16, 21, 30))).toBe(-1)
+    expect(currentPeriodIndex(new Date(2026, 10, 16, 5, 0))).toBe(-1)
+    // Giờ nghỉ trưa 11:40-12:30 không thuộc tiết nào.
+    expect(currentPeriodIndex(new Date(2026, 10, 16, 12, 0))).toBe(-1)
   })
 })
 

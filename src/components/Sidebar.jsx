@@ -1,14 +1,28 @@
 import { useEffect, useState } from 'react'
+import {
+  IconCalendarDays, IconCheckSquare, IconChevronLeft, IconChevronRight,
+  IconClipboardList, IconFlask, IconMonitor, IconMoon, IconSettings,
+  IconSun, IconUsers,
+} from '../lib/ui-icons.jsx'
 
 export const SIDEBAR_KEY = 'schedulingapp-sidebar-v1'
 
+// Điều hướng chính — icon SVG inline (không emoji) cho UI chrome.
+// Icon emoji của từng buổi học vẫn giữ nguyên (lib/icons.js).
 export const NAV_ITEMS = [
-  { id: 'schedule', label: 'Lịch học', icon: '📅' },
-  { id: 'exams', label: 'Lịch thi', icon: '📝' },
-  { id: 'simulator', label: 'Mô phỏng đăng ký', icon: '🧪' },
-  { id: 'freetime', label: 'Giờ trống chung', icon: '👥' },
-  { id: 'tasks', label: 'Task & Deadline', icon: '✅' },
+  { id: 'schedule', label: 'Lịch học', Icon: IconCalendarDays, section: 'HỌC TẬP' },
+  { id: 'exams', label: 'Lịch thi', Icon: IconClipboardList, section: 'HỌC TẬP' },
+  { id: 'simulator', label: 'Mô phỏng đăng ký', Icon: IconFlask, section: 'HỌC TẬP' },
+  { id: 'freetime', label: 'Giờ trống chung', Icon: IconUsers, section: 'CÔNG CỤ' },
+  { id: 'tasks', label: 'Task & Deadline', Icon: IconCheckSquare, section: 'CÔNG CỤ' },
 ]
+
+const MODE_LABEL = { light: 'Sáng', dark: 'Tối', system: 'Theo hệ thống' }
+function ModeIcon({ mode, className }) {
+  if (mode === 'dark') return <IconMoon className={className} />
+  if (mode === 'system') return <IconMonitor className={className} />
+  return <IconSun className={className} />
+}
 
 function loadCollapsed() {
   try { return localStorage.getItem(SIDEBAR_KEY) === 'collapsed' } catch { return false }
@@ -17,19 +31,21 @@ function loadCollapsed() {
 // Sidebar trái (desktop): logo + điều hướng chính của app. Thu gọn được
 // về dạng chỉ icon (nhớ lựa chọn ở localStorage). Trên mobile (<md) không
 // dùng sidebar dọc — DashboardPage vẽ thanh tab ngang thay thế.
+// Chuyển học kỳ HK1/HK2 chỉ nằm ở sidebar (không còn bản sao ở header).
 export function Sidebar({ view, onViewChange, semester, onSemesterChange, theme, onOpenSettings, collapsed, onToggleCollapsed }) {
+  let lastSection = null
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-slate-200 bg-white/95 backdrop-blur md:flex dark:border-slate-700 dark:bg-slate-900/95 ${
+      className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-border bg-surface md:flex ${
         collapsed ? 'w-16' : 'w-60'
       }`}
     >
-      <div className={`flex items-center gap-3 border-b border-slate-200 px-3 py-3 dark:border-slate-700 ${collapsed ? 'justify-center px-2' : ''}`}>
+      <div className={`flex items-center gap-3 border-b border-border px-3 py-3 ${collapsed ? 'justify-center px-2' : ''}`}>
         <img src="/logo.png" alt="SchedulingApp" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
         {!collapsed && (
           <div className="min-w-0">
-            <p className="truncate text-base font-extrabold leading-tight">SchedulingApp</p>
-            <p className="truncate text-xs text-slate-500 dark:text-slate-400">Xếp Lịch Học · IUH</p>
+            <p className="truncate text-base font-extrabold leading-tight text-foreground">SchedulingApp</p>
+            <p className="truncate text-xs text-muted">Xếp Lịch Học · IUH</p>
           </div>
         )}
       </div>
@@ -37,41 +53,59 @@ export function Sidebar({ view, onViewChange, semester, onSemesterChange, theme,
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
         {NAV_ITEMS.map((item) => {
           const active = view === item.id
+          const showSection = item.section !== lastSection
+          lastSection = item.section
           return (
-            <button
-              key={item.id}
-              onClick={() => onViewChange(item.id)}
-              title={collapsed ? item.label : undefined}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold ${
-                active
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-              } ${collapsed ? 'justify-center px-2' : ''}`}
-            >
-              <span className="text-lg leading-none">{item.icon}</span>
-              {!collapsed && <span className="truncate text-left">{item.label}</span>}
-            </button>
+            <div key={item.id}>
+              {showSection && !collapsed && (
+                <p className="px-3 pb-1 pt-2 text-[11px] font-bold tracking-wider text-muted">{item.section}</p>
+              )}
+              <button
+                onClick={() => onViewChange(item.id)}
+                title={collapsed ? item.label : undefined}
+                aria-current={active ? 'page' : undefined}
+                className={`transition-soft relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold ${
+                  active
+                    ? 'bg-primary text-white shadow-card'
+                    : 'text-muted hover:bg-primary/10 hover:text-foreground'
+                } ${collapsed ? 'justify-center px-2' : ''}`}
+              >
+                {active && <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-white" aria-hidden="true" />}
+                <item.Icon className="h-5 w-5 shrink-0" />
+                {!collapsed && <span className="truncate text-left">{item.label}</span>}
+              </button>
+            </div>
           )
         })}
+        {!collapsed && (
+          <p className="px-3 pb-1 pt-2 text-[11px] font-bold tracking-wider text-muted">HỆ THỐNG</p>
+        )}
         <button
           onClick={onOpenSettings}
           title={collapsed ? 'Cài đặt' : undefined}
-          className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 ${collapsed ? 'justify-center px-2' : ''}`}
+          className={`transition-soft flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-muted hover:bg-primary/10 hover:text-foreground ${collapsed ? 'justify-center px-2' : ''}`}
         >
-          <span className="text-lg leading-none">⚙️</span>
+          <IconSettings className="h-5 w-5 shrink-0" />
           {!collapsed && <span className="truncate text-left">Cài đặt</span>}
         </button>
       </nav>
 
-      <div className="space-y-2 border-t border-slate-200 px-2 py-3 dark:border-slate-700">
+      <div className="space-y-2 border-t border-border px-2 py-3">
         {!collapsed ? (
           <>
-            <div className="flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+            <div className="flex items-center gap-2.5 rounded-xl px-1 py-1">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-extrabold text-white">NL</span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-bold text-foreground">Nguyễn Hữu Lộc</span>
+                <span className="block truncate text-xs text-muted">IUH · Sinh viên</span>
+              </span>
+            </div>
+            <div className="flex rounded-lg bg-background p-1">
               {[{ id: 'hk1', label: 'HK1' }, { id: 'hk2', label: 'HK2 · Nháp' }].map((s) => (
                 <button
                   key={s.id}
                   onClick={() => onSemesterChange(s.id)}
-                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-bold ${semester === s.id ? 'bg-white shadow dark:bg-slate-900' : 'text-slate-600 dark:text-slate-300'}`}
+                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-bold ${semester === s.id ? 'bg-surface text-foreground shadow-card' : 'text-muted'}`}
                 >
                   {s.label}
                 </button>
@@ -79,10 +113,11 @@ export function Sidebar({ view, onViewChange, semester, onSemesterChange, theme,
             </div>
             <button
               onClick={theme.cycleMode}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-2 py-1.5 text-xs font-bold hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+              className="btn-ghost flex w-full items-center justify-center gap-2 px-2 py-1.5 text-xs"
               title="Đổi sáng / tối / theo hệ thống"
             >
-              {theme.dark ? '🌙 Tối' : '☀️ Sáng'} · {theme.mode === 'system' ? 'theo hệ thống' : theme.mode === 'dark' ? 'tối' : 'sáng'}
+              <ModeIcon mode={theme.mode} className="h-4 w-4" />
+              {MODE_LABEL[theme.mode]}
             </button>
           </>
         ) : (
@@ -90,25 +125,25 @@ export function Sidebar({ view, onViewChange, semester, onSemesterChange, theme,
             <button
               onClick={() => onSemesterChange(semester === 'hk1' ? 'hk2' : 'hk1')}
               title={`Học kỳ: ${semester === 'hk1' ? 'HK1' : 'HK2 · Nháp'} — bấm để đổi`}
-              className="flex w-full items-center justify-center rounded-lg bg-slate-100 py-2 text-xs font-bold dark:bg-slate-800"
+              className="flex w-full items-center justify-center rounded-lg bg-background py-2 text-xs font-bold text-foreground"
             >
               {semester === 'hk1' ? 'HK1' : 'HK2'}
             </button>
             <button
               onClick={theme.cycleMode}
-              title="Đổi sáng / tối / theo hệ thống"
-              className="flex w-full items-center justify-center rounded-lg border border-slate-300 py-2 text-base dark:border-slate-600"
+              title={`Giao diện: ${MODE_LABEL[theme.mode]} — bấm để đổi`}
+              className="btn-ghost flex w-full items-center justify-center py-2"
             >
-              {theme.dark ? '🌙' : '☀️'}
+              <ModeIcon mode={theme.mode} className="h-5 w-5" />
             </button>
           </>
         )}
         <button
           onClick={onToggleCollapsed}
           title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
-          className="flex w-full items-center justify-center rounded-lg py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          className="transition-soft flex w-full items-center justify-center gap-1 rounded-lg py-1.5 text-xs font-bold text-muted hover:bg-primary/10"
         >
-          {collapsed ? '»' : '« Thu gọn'}
+          {collapsed ? <IconChevronRight className="h-4 w-4" /> : <><IconChevronLeft className="h-4 w-4" /> Thu gọn</>}
         </button>
       </div>
     </aside>

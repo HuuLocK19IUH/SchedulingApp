@@ -57,7 +57,7 @@ npm run preview
   cài được như app (PWA) trên điện thoại.
 - Khung giờ tiết chọn theo trường (mặc định IUH) hoặc tự chỉnh từng tiết
   trong menu Cài đặt → "Khung giờ tiết".
-- Tab **Lịch thi** riêng (màu đỏ): buổi thi + task thi, có ngày thi thì
+- Mục **Lịch thi** riêng trên sidebar (màu đỏ): buổi thi + task thi, có ngày thi thì
   đếm ngược.
 - Xuất ảnh PNG lưới tuần để share nhóm, và **Tìm giờ trống chung** để
   tìm khung giờ cả nhóm cùng rảnh — giờ nằm ở mục riêng trên sidebar.
@@ -70,10 +70,10 @@ npm run preview
 
 ## Cá nhân hóa
 
-- **Sáng / tối:** nút ☀️/🌙 trên header (bấm để xoay Sáng → Tối →
-  Theo hệ thống) hoặc trong menu Cài đặt → "Giao diện". Chế độ "Theo
-  hệ thống" tự theo giao diện máy, đổi live. Lưu ở localStorage key
-  `schedulingapp-theme-v1`.
+- **Sáng / tối:** nút sáng/tối trên header hoặc cuối sidebar (bấm để
+  xoay Sáng → Tối → Theo hệ thống) hoặc trong menu Cài đặt → "Giao
+  diện". Chế độ "Theo hệ thống" tự theo giao diện máy, đổi live. Lưu ở
+  localStorage key `schedulingapp-theme-v1`.
 - **Nền dashboard:** trong menu Cài đặt → "Nền dashboard": Mặc định,
   Hoàng hôn, Rừng xanh, Biển, hoặc Màu tự chọn (bấm ô màu / nhập mã
   hex, ví dụ `#4f46e5`). Nền là gradient; ở dark mode mọi nền tự đổi
@@ -84,13 +84,46 @@ npm run preview
   Icon hiện trên khối môn ở lưới tuần, widget Hôm nay, modal chi tiết,
   tab Lịch thi và cả trong mô phỏng đăng ký.
 
+## Thiết kế (Part 6 — UI/UX Pro Max)
+
+Hướng thiết kế: **Bento Grid + Soft UI Evolution** với kỷ luật tối giản
+kiểu Thụy Sĩ — một màu nhấn duy nhất (indigo), bóng mềm, chiều sâu nhẹ,
+không dùng gradient tím/hồng neon. Token ngữ nghĩa nằm ở `src/index.css`
+(`@theme`: background / surface / foreground / primary / border / ring
++ bóng thẻ), giá trị sáng ở `:root`, giá trị tối ở `.dark`; các mặt
+chính dùng token (`bg-surface`, `border-border`, `text-foreground`,
+`bg-primary`…) thay vì hard-code màu rải rác.
+
+- **Sidebar:** chia nhóm HỌC TẬP / CÔNG CỤ / HỆ THỐNG, mục đang xem là
+  pill màu nhấn có vạch chỉ bên trái, cuối sidebar có thẻ user "Nguyễn
+  Hữu Lộc · IUH" và chuyển học kỳ HK1/HK2 (chuyển học kỳ chỉ nằm ở
+  sidebar — không còn bản sao ở header). Nút sáng/tối ở sidebar chỉ
+  hiện đúng tên chế độ ("Sáng" / "Tối" / "Theo hệ thống").
+- **Header:** gọn lại — tiêu đề view + ô tìm kiếm kiểu command-palette
+  (phím `/` để nhảy vào ô tìm), nút sáng/tối, nút Cài đặt.
+- **Thống kê kiểu Bento:** 4 thẻ có icon chip SVG, số lớn, nhãn và dòng
+  ngữ cảnh tính từ dữ liệu thật (VD: "5 môn" kèm "10 buổi / tuần"),
+  hover nâng nhẹ (tắt khi hệ thống bật giảm chuyển động).
+- **Lưới tuần:** cột hôm nay được nhấn nền + nhãn "Hôm nay", vạch
+  "Đang học" ở tiết hiện tại (tính theo khung giờ đang dùng), ô trống
+  hiện dấu "+" khi rê chuột, khối môn có giờ + phòng tách dòng riêng.
+- **Icon:** icon UI chrome dùng SVG inline kiểu Lucide
+  (`src/lib/ui-icons.jsx`, không thêm dependency), không dùng emoji làm
+  icon điều hướng/nút bấm. Icon emoji của từng buổi học (Part 5) giữ
+  nguyên vì đó là lựa chọn trang trí của Lộc.
+- **Tiếp cận:** mọi phần tử bấm được có `cursor: pointer` và vòng
+  focus thấy rõ; chuyển động ~150ms và tắt hẳn khi
+  `prefers-reduced-motion`; tương phản ≥ 4.5:1 ở light mode; bố cục
+  responsive 375 / 768 / 1024 / 1440.
+
 ## Điều hướng
 
-Sidebar trái (desktop, rộng 240px, thu gọn còn 64px bằng nút "« Thu
-gọn" ở cuối — lựa chọn được nhớ ở localStorage
-`schedulingapp-sidebar-v1`): logo + Lịch học, Lịch thi, Mô phỏng đăng
-ký, Giờ trống chung, Task & Deadline, Cài đặt; cuối sidebar có chuyển
-học kỳ HK1/HK2 và nút sáng/tối. Trên điện thoại (<md) sidebar thành
+Sidebar trái (desktop, rộng 240px, thu gọn còn 64px bằng nút thu gọn ở
+cuối — lựa chọn được nhớ ở localStorage
+`schedulingapp-sidebar-v1`): logo + các mục chia nhóm HỌC TẬP (Lịch học,
+Lịch thi, Mô phỏng đăng ký), CÔNG CỤ (Giờ trống chung, Task & Deadline),
+HỆ THỐNG (Cài đặt); cuối sidebar có thẻ user "Nguyễn Hữu Lộc · IUH",
+chuyển học kỳ HK1/HK2 và nút sáng/tối. Trên điện thoại (<md) sidebar thành
 thanh tab ngang cuộn được ở đầu trang — không dùng hamburger, mọi mục
 đều thấy ngay.
 
@@ -153,7 +186,7 @@ Chưa có OCR ảnh chụp lịch — đó là bước sau.
   dashboard: mỗi buổi kèm "Bắt đầu sau X phút / Đang học / Đã xong".
   Web không làm được widget ngoài màn hình chính như app native — đó là
   giới hạn của PWA.
-- **Task & deadline**: thẻ "Task & deadline" dưới widget Hôm nay — thêm
+- **Task & deadline**: mục "Task & Deadline" riêng trên sidebar — thêm
   task (tên, môn, loại Bài tập / Thi / Deadline / Khác, ngày hết hạn),
   tick để xong, lọc Tất cả / Chưa xong / Đã xong. Task loại Thi bắt buộc
   có ngày thi. Kỳ thi gần nhất hiện ngay đầu thẻ với đếm ngược
@@ -176,7 +209,7 @@ Chưa có OCR ảnh chụp lịch — đó là bước sau.
   tiết kết thúc sau khi bắt đầu và các tiết xếp theo thứ tự tăng dần,
   sai thì báo lỗi rõ ràng. Đổi khung giờ là đổi giờ khắp app: lưới tuần,
   widget Hôm nay, nhắc lịch, xuất .ics, mô phỏng.
-- **Lịch thi**: bấm tab **Lịch thi** trên header (màu đỏ). Liệt kê các
+- **Lịch thi**: bấm mục **Lịch thi** trên sidebar (màu đỏ). Liệt kê các
   buổi loại "Thi" và task loại "Thi": có ngày thi thì hiện ngày + đếm
   ngược ("còn X ngày" / "Hôm nay" / "Quá hạn"), chưa có ngày thì xếp
   sau theo thứ. Nhập ngày thi trong form thêm/sửa buổi khi chọn loại
@@ -185,8 +218,8 @@ Chưa có OCR ảnh chụp lịch — đó là bước sau.
 - **Xuất ảnh PNG**: menu Cài đặt → "Xuất ảnh PNG" tải file
   `schedulingapp-lich-hoc.png` — lưới tuần vẽ bằng Canvas, tiêu đề +
   giờ theo preset đang dùng, khối môn tô màu như trên web.
-- **Tìm giờ trống chung**: cuối trang Lịch học, mục "Tìm giờ trống
-  chung". Thêm bạn bằng tên + dán lịch bận của bạn (cùng định dạng dán
+- **Tìm giờ trống chung**: bấm mục **Giờ trống chung** trên sidebar.
+  Thêm bạn bằng tên + dán lịch bận của bạn (cùng định dạng dán
   nhanh). App liệt kê 5 khung trống dài nhất (≥ 2 tiết) và bảng giờ
   trống theo ngày. Bạn bè lưu ở localStorage máy này
   (`schedulingapp-friends-v1`). Chia sẻ bằng cách bạn xuất lịch
@@ -196,9 +229,9 @@ Chưa có OCR ảnh chụp lịch — đó là bước sau.
 ## Kiểm thử & CI
 
 ```bash
-npm test        # Vitest — 27 test cho logic thuần (giờ tiết, trùng tiết,
-                # chấm điểm phương án, import dán nhanh/CSV, xuất .ics, giờ trống,
-                # icon mặc định theo loại buổi)
+npm test        # Vitest — 28 test cho logic thuần (giờ tiết, trùng tiết,
+                # tiết hiện tại, chấm điểm phương án, import dán nhanh/CSV,
+                # xuất .ics, giờ trống, icon mặc định theo loại buổi)
 npm run build
 ```
 
@@ -223,6 +256,12 @@ push lên `main` là Vercel deploy lại, không cần token hay secret gì thê
   nền dashboard tùy chọn, icon cho từng buổi học, sidebar trái
   (desktop) / thanh tab ngang (mobile), Task & Giờ trống chung thành
   mục riêng.
+- [x] Phần 6 — UI/UX Pro Max (15/11/2026): hệ token thiết kế (Bento
+  Grid + Soft UI Evolution), sidebar chia nhóm + thẻ user, header gọn
+  với ô tìm kiếm kiểu command-palette (phím `/`), thẻ thống kê Bento,
+  cột hôm nay + vạch "Đang học" trên lưới tuần, icon SVG cho UI chrome,
+  sửa 2 lỗi giao diện (chuyển học kỳ trùng ở header + sidebar, nút
+  theme ở sidebar ghi "Sáng · sáng").
 - [ ] Tiếp theo: OCR ảnh chụp lịch, preset giờ thật của các trường khác
   (ghi rõ nguồn), đồng bộ đám mây khi cần (xem bên dưới).
 
@@ -306,24 +345,27 @@ src/
     useTheme.js            # sáng/tối + nền dashboard (localStorage `schedulingapp-theme-v1`,
                            # gắn class .dark lên <html>, theo hệ thống live)
   components/
-    Header.jsx             # header gọn: tiêu đề view + chuyển học kỳ + nút sáng/tối
-                           # + menu Cài đặt (giao diện, nhắc lịch, xuất .ics/PNG, cài app,
-                           # khung giờ tiết) — menu điều khiển từ DashboardPage
-    Sidebar.jsx            # sidebar trái: logo + điều hướng 5 mục + Cài đặt,
-                           # chuyển học kỳ + sáng/tối ở cuối, thu gọn về chỉ icon
+    Header.jsx             # header gọn: tiêu đề view + ô tìm kiếm (phím "/")
+                           # + nút sáng/tối + menu Cài đặt (giao diện, nhắc lịch,
+                           # xuất .ics/PNG, cài app, khung giờ tiết) — menu điều
+                           # khiển từ DashboardPage
+    Sidebar.jsx            # sidebar trái: logo + điều hướng 5 mục chia nhóm
+                           # HỌC TẬP / CÔNG CỤ / HỆ THỐNG, thẻ user, chuyển học
+                           # kỳ + sáng/tối ở cuối, thu gọn về chỉ icon
     ThemeSettings.jsx      # mục "Giao diện" trong menu Cài đặt (sáng/tối + nền)
     PresetSettings.jsx     # mục "Khung giờ tiết" trong menu Cài đặt (chọn preset / tự chỉnh)
-    ExamList.jsx           # tab Lịch thi: buổi thi + task thi, đếm ngược
+    ExamList.jsx           # mục Lịch thi: buổi thi + task thi, đếm ngược
     FreeTimeFinder.jsx     # tìm giờ trống chung với bạn bè (lưu localStorage)
-    StatsBar.jsx           # 4 ô thống kê: môn, buổi/tuần, ngày học, tiết/tuần
+    StatsBar.jsx           # 4 thẻ thống kê kiểu Bento: icon + số + ngữ cảnh
     ConflictBanner.jsx     # banner cảnh báo các buổi đang trùng tiết
     ReminderBanner.jsx     # banner vàng nhắc sắp học / sắp đến hạn
     TodayTomorrow.jsx      # widget "Hôm nay học gì" + Ngày mai (kèm đếm ngược)
     TasksPanel.jsx         # danh sách task & deadline + form thêm + đếm ngược thi
-    Toolbar.jsx            # tìm kiếm + lọc theo loại + nút Thêm buổi / Nhập nhanh
+    Toolbar.jsx            # lọc theo loại + nút Thêm buổi / Nhập nhanh
     QuickImportModal.jsx   # khung dán nhanh: mỗi buổi một dòng
-    WeekGrid.jsx           # lưới tuần desktop + xem theo ngày trên điện thoại
-    SessionCard.jsx        # một khối môn trên lưới tuần
+    WeekGrid.jsx           # lưới tuần desktop + xem theo ngày trên điện thoại,
+                           # cột hôm nay + vạch "Đang học" + dấu "+" ở ô trống
+    SessionCard.jsx        # một khối môn trên lưới tuần (giờ + phòng tách dòng)
     SessionDetailModal.jsx # modal xem chi tiết một buổi
     SessionFormModal.jsx   # form thêm / sửa buổi, có cảnh báo trùng tiết
     PlanCompare.jsx        # bảng so sánh các phương án mô phỏng
@@ -339,6 +381,7 @@ src/
                            # lần học tiếp theo, đếm ngược, kiểm tra khung giờ (hàm thuần)
     colors.js              # bảng màu theo môn (PALETTE sáng + tối, colorFor, TYPE_STYLE)
     icons.js               # icon emoji cho buổi học + icon mặc định theo loại (hàm thuần)
+    ui-icons.jsx           # icon SVG inline kiểu Lucide cho UI chrome (không dependency)
     theme.js               # nền dashboard: preset gradient + trộn màu tự chọn (hàm thuần)
     download.js            # tải chuỗi text xuống máy dưới dạng file
     ics.js                 # xuất file .ics cho Google Calendar (hàm thuần)

@@ -149,6 +149,15 @@ export function sessionStatusToday(session, now = new Date(), times = PERIOD_TIM
   return 'done'
 }
 
+/** Tiết đang diễn ra lúc `now` (chỉ số 0-based, 0 = tiết 1), -1 nếu ngoài giờ học. */
+export function currentPeriodIndex(now = new Date(), times = PERIOD_TIMES) {
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+  for (let i = 0; i < times.length; i++) {
+    if (nowMin >= periodStartMinutes(i + 1, times) && nowMin < periodEndMinutes(i + 1, times)) return i
+  }
+  return -1
+}
+
 /** "2026-11-14" theo giờ địa phương (không dùng toISOString vì lệch múi giờ). */
 export function formatDateLocal(date) {
   const y = date.getFullYear()

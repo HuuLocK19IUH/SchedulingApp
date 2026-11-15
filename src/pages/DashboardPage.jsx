@@ -24,11 +24,11 @@ import { FreeTimeFinder } from '../components/FreeTimeFinder.jsx'
 import { exportTimetablePng } from '../lib/exportPng.js'
 
 const VIEW_TITLES = {
-  schedule: '📅 Lịch học',
-  exams: '📝 Lịch thi',
-  simulator: '🧪 Mô phỏng đăng ký',
-  freetime: '👥 Giờ trống chung',
-  tasks: '✅ Task & Deadline',
+  schedule: 'Lịch học',
+  exams: 'Lịch thi',
+  simulator: 'Mô phỏng đăng ký',
+  freetime: 'Giờ trống chung',
+  tasks: 'Task & Deadline',
 }
 
 export function DashboardPage() {
@@ -105,24 +105,22 @@ export function DashboardPage() {
       />
 
       {/* Thanh tab ngang trên mobile — cùng các mục sidebar, không dùng hamburger. */}
-      <nav className="sticky top-0 z-20 flex gap-1.5 overflow-x-auto border-b border-slate-200 bg-white/95 px-3 py-2 backdrop-blur md:hidden dark:border-slate-700 dark:bg-slate-900/95">
+      <nav className="sticky top-0 z-20 flex gap-1.5 overflow-x-auto border-b border-border bg-surface/95 px-3 py-2 backdrop-blur md:hidden">
         {NAV_ITEMS.map((item) => (
           <button
             key={item.id}
             onClick={() => setView(item.id)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${
-              view === item.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-soft ${
+              view === item.id ? 'bg-primary text-white' : 'bg-background text-muted'
             }`}
           >
-            {item.icon} {item.label}
+            <item.Icon className="h-4 w-4" /> {item.label}
           </button>
         ))}
       </nav>
 
       <div className={sidebarCollapsed ? 'md:pl-16' : 'md:pl-60'}>
         <Header
-          semester={semester}
-          onSemesterChange={setSemester}
           viewTitle={VIEW_TITLES[view]}
           theme={theme}
           settingsOpen={settingsOpen}
@@ -139,6 +137,8 @@ export function DashboardPage() {
           onReminderMinutes={reminders.setMinutesBefore}
           onRequestPermission={reminders.requestPermission}
           install={install}
+          search={search}
+          onSearchChange={setSearch}
         />
 
         {view === 'simulator' ? (
@@ -185,7 +185,6 @@ export function DashboardPage() {
           <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} times={preset.times} dark={theme.dark} />
 
           <Toolbar
-            search={search} onSearchChange={setSearch}
             filterType={filterType} onFilterChange={setFilterType}
             onAdd={() => setForm({ ...EMPTY_FORM })}
             pasteOpen={pasteOpen} onTogglePaste={() => setPasteOpen((v) => !v)}
