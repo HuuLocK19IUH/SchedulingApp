@@ -116,6 +116,28 @@ chính dùng token (`bg-surface`, `border-border`, `text-foreground`,
   `prefers-reduced-motion`; tương phản ≥ 4.5:1 ở light mode; bố cục
   responsive 375 / 768 / 1024 / 1440.
 
+## Sửa lỗi UI (Part 7)
+
+- **Ô tìm kiếm (header):** icon kính lúp đè lên placeholder — nguyên
+  nhân: class `.input` trong `src/index.css` viết trần (không layer)
+  nên thắng utility `pl-9`/`pr-10` của Tailwind, đệm trái thực tế chỉ
+  còn 12px. Đã đưa các class dùng chung (`.input`, `.btn-primary`,
+  `.btn-ghost`, `.card`) vào `@layer components` để utility thắng đúng
+  như ý, tăng đệm lên `pl-10`/`pr-10`, thêm nút xóa (×) khi có chữ
+  (gợi ý phím `/` chỉ hiện khi ô trống).
+- **Cột "Chủ nhật" xuống dòng:** tiêu đề ngày trên lưới tuần là
+  `flex-col` nên huy hiệu "Hôm nay" rớt xuống dòng thứ hai dưới tên
+  ngày — thấy rõ nhất vào ngày Chủ nhật. Đã xếp tiêu đề một hàng
+  (`flex-row` + `whitespace-nowrap`, huy hiệu nằm cạnh tên ngày),
+  nâng chiều rộng tối thiểu của lưới lên 1024px (≈135px/cột).
+  Cụm ngày/giờ trong tab Lịch thi cũng giữ nguyên một dòng.
+- **Thêm:** chip lọc cuộn ngang một hàng trên mobile; widget Hôm nay
+  hiện buổi tiếp theo gần nhất khi hôm nay trống; banner trùng tiết có
+  viền trái đỏ dày + icon cảnh báo; trạng thái trống (lưới tuần, ngày
+  trên mobile, Lịch thi) có nút làm luôn ("Thêm buổi đầu tiên",
+  "Khôi phục lịch gốc"); tên môn/phòng/GV dài được cắt gọn + `title`
+  để rê chuột vẫn đọc đủ.
+
 ## Điều hướng
 
 Sidebar trái (desktop, rộng 240px, thu gọn còn 64px bằng nút thu gọn ở
@@ -262,6 +284,14 @@ push lên `main` là Vercel deploy lại, không cần token hay secret gì thê
   cột hôm nay + vạch "Đang học" trên lưới tuần, icon SVG cho UI chrome,
   sửa 2 lỗi giao diện (chuyển học kỳ trùng ở header + sidebar, nút
   theme ở sidebar ghi "Sáng · sáng").
+- [x] Phần 7 — Sửa lỗi UI (15/11/2026): sửa ô tìm kiếm (icon đè lên
+  placeholder do `.input` viết trần thắng utility `pl-9` — đã đưa class
+  dùng chung vào `@layer components`, thêm nút xóa khi có chữ), sửa
+  cột "Chủ nhật" xuống dòng (tiêu đề ngày là flex-col nên huy hiệu
+  "Hôm nay" rớt xuống dòng thứ hai — đã xếp một hàng + `whitespace-nowrap`),
+  chip lọc cuộn ngang trên mobile, widget Hôm nay hiện buổi tiếp theo
+  khi hôm nay trống, banner trùng tiết rõ hơn, trạng thái trống có nút
+  làm luôn, cắt gọn tên môn/phòng/GV dài.
 - [ ] Tiếp theo: OCR ảnh chụp lịch, preset giờ thật của các trường khác
   (ghi rõ nguồn), đồng bộ đám mây khi cần (xem bên dưới).
 

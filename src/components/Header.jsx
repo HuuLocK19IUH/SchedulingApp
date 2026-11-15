@@ -4,7 +4,7 @@ import { ThemeSettings } from './ThemeSettings.jsx'
 import {
   IconBell, IconCalendarDays, IconDownload, IconFolderOpen, IconImage, IconMonitor,
   IconMoon, IconRotateCcw, IconSave, IconSearch, IconSettings,
-  IconSmartphone, IconSun,
+  IconSmartphone, IconSun, IconX,
 } from '../lib/ui-icons.jsx'
 
 // Header gọn: tiêu đề view hiện tại + ô tìm kiếm kiểu command-palette +
@@ -59,7 +59,10 @@ export function Header({ viewTitle, theme, settingsOpen, onSettingsOpenChange, o
           <h1 className="truncate text-lg font-extrabold leading-tight text-foreground">{viewTitle}</h1>
           <p className="hidden text-xs text-muted sm:block">SchedulingApp · Nguyễn Hữu Lộc · IUH</p>
         </div>
-        <div className="relative order-3 w-full sm:order-none sm:w-auto sm:min-w-[240px] sm:flex-1 sm:max-w-md">
+        <div className="relative order-3 w-full min-w-0 sm:order-none sm:w-auto sm:min-w-[240px] sm:flex-1 sm:max-w-md">
+          {/* Icon kính lúp: pointer-events-none, nằm gọn trong vùng đệm trái
+              pl-10 của input — trước đây `.input` (không layer) đã nuốt mất
+              pl-9/pr-10 nên icon đè lên placeholder; đã sửa ở index.css. */}
           <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
             ref={searchRef}
@@ -67,9 +70,24 @@ export function Header({ viewTitle, theme, settingsOpen, onSettingsOpenChange, o
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Tìm môn, giảng viên, phòng, mã LHP…"
             aria-label="Tìm môn, giảng viên, phòng, mã LHP"
-            className="input rounded-full py-2 pl-9 pr-10"
+            className="input rounded-full py-2 pl-10 pr-10"
           />
-          <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-bold text-muted sm:block">/</kbd>
+          {/* Gợi ý phím "/" chỉ hiện khi ô trống; có chữ thì hiện nút xóa —
+              hai thứ không bao giờ chồng lên nhau, và pr-10 giữ chữ gõ
+              không chạy xuống dưới chúng. */}
+          {search ? (
+            <button
+              type="button"
+              onClick={() => onSearchChange('')}
+              aria-label="Xóa tìm kiếm"
+              title="Xóa tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted transition-soft hover:bg-border hover:text-foreground"
+            >
+              <IconX className="h-4 w-4" />
+            </button>
+          ) : (
+            <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-bold text-muted sm:block">/</kbd>
+          )}
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <button

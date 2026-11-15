@@ -150,7 +150,7 @@ export function DashboardPage() {
               Riêng các buổi thi và task thi — có ngày thi thì đếm ngược, chưa có ngày thì xếp sau.
               Các buổi thi vẫn hiện trên lưới tuần ở tab Lịch học.
             </p>
-            <ExamList sessions={sessions} tasks={tasksApi.tasks} times={preset.times} onSelectSession={setDetail} />
+            <ExamList sessions={sessions} tasks={tasksApi.tasks} times={preset.times} onSelectSession={setDetail} onAddExam={() => setForm({ ...EMPTY_FORM, type: 'Thi' })} />
           </main>
         ) : view === 'freetime' ? (
           <main className="mx-auto max-w-7xl px-4 py-5">
@@ -182,7 +182,7 @@ export function DashboardPage() {
 
           <StatsBar stats={stats} />
           <ConflictBanner conflictList={conflictList} />
-          <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} times={preset.times} dark={theme.dark} />
+          <TodayTomorrow today={today} tomorrow={tomorrow} daySessions={daySessions} conflicts={conflicts} onSelect={setDetail} times={preset.times} dark={theme.dark} sessions={sessions} />
 
           <Toolbar
             filterType={filterType} onFilterChange={setFilterType}
@@ -202,6 +202,8 @@ export function DashboardPage() {
             onEmptyCell={(day, period) => setForm({ ...EMPTY_FORM, day, start: period, end: period })}
             times={preset.times}
             dark={theme.dark}
+            onAddFirst={() => setForm({ ...EMPTY_FORM })}
+            onRestoreSeed={restoreSeed}
           />
 
           <footer className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">

@@ -19,14 +19,14 @@ export function SessionCard({ session, isConflict, onSelect, dark = false, times
         boxShadow: isConflict ? '0 0 0 2px #dc2626 inset' : undefined,
       }}
     >
-      <span className="block text-xs font-bold leading-tight" style={{ color: c.text }}>
+      <span className="block truncate text-xs font-bold leading-tight" style={{ color: c.text }} title={session.subject}>
         {isConflict ? '⚠️ ' : ''}{iconFor(session)} {session.subject}
       </span>
-      <span className="mt-0.5 block text-[11px] leading-tight" style={{ color: c.text }}>
+      <span className="mt-0.5 block truncate text-[11px] leading-tight" style={{ color: c.text }}>
         Tiết {session.start}-{session.end} · {timeRange(session.start, session.end, times)}
       </span>
-      {session.room && <span className="block text-[11px] leading-tight" style={{ color: c.text }}>📍 {session.room}</span>}
-      {session.teacher && <span className="block truncate text-[11px]" style={{ color: c.text }}>{session.teacher}</span>}
+      {session.room && <span className="block truncate text-[11px] leading-tight" style={{ color: c.text }} title={session.room}>📍 {session.room}</span>}
+      {session.teacher && <span className="block truncate text-[11px]" style={{ color: c.text }} title={session.teacher}>{session.teacher}</span>}
       {session.type !== 'Học' && <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${TYPE_STYLE[session.type]}`}>{session.type}</span>}
     </button>
   )

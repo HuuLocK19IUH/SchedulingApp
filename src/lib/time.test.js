@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  PERIOD_TIMES, conflictIds, currentPeriodIndex, nextOccurrence, periodEndMinutes,
-  periodStartMinutes, timeRange, validatePeriodTimes,
+  PERIOD_TIMES, conflictIds, currentPeriodIndex, nextOccurrence, nextUpcomingSession,
+  periodEndMinutes, periodStartMinutes, timeRange, validatePeriodTimes,
 } from './time.js'
 
 // Buổi thật của Lộc — Thứ 6 tiết 9 trùng nhau giữa Lập trình di động
@@ -82,5 +82,25 @@ describe('validatePeriodTimes', () => {
 
   it('từ chối khi thiếu tiết', () => {
     expect(validatePeriodTimes(PERIOD_TIMES.slice(0, 15))).toMatch(/16 tiết/)
+  })
+})
+
+describe('nextUpcomingSession', () => {
+  it('lấy buổi gần nhất trong tương lai, bỏ qua buổi hôm nay đã qua giờ', () => {
+    // Chủ nhật 15/11/2026 11:00: buổi Thứ 2 tiết 7 (12:30) gần nhất,
+    // buổi Thứ 6 tiết 7 đã qua trong tuần này nên tính sang tuần sau.
+    const mon = { id: 'm', subject: 'Lập trình WWW (Java)', day: 0, start: 7, end: 9 }
+    const fri = { id: 'f', subject: 'Lập trình di động', day: 4, start: 7, end: 9 }
+    const next = nextUpcomingSession([fri, mon], new Date(2026, 10, 15, 11, 0))
+    expect(next.session.id).toBe('m')
+    expect(next.date.getDay()).toBe(1)
+    expect(next.date.getDate()).toBe(16)
+    expect(next.date.getHours()).toBe(12)
+    expect(next.date.getMinutes()).toBe(30)
+  })
+
+  it('trả về null khi không có buổi nào', () => {
+    expect(nextUpcomingSession([], new Date(2026, 10, 15, 11, 0))).toBeNull()
+    expect(nextUpcomingSession(null, new Date(2026, 10, 15, 11, 0))).toBeNull()
   })
 })

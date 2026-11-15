@@ -7,6 +7,7 @@ export function WeekGrid({
   sessions, filteredIds, conflicts, today,
   mobileDay, onMobileDayChange,
   daySessions, onSelect, onEmptyCell, times = PERIOD_TIMES, dark = false,
+  onAddFirst, onRestoreSeed,
 }) {
   const PERIOD_TIMES = times
   // Tiết đang diễn ra (chỉ số 0-based), -1 nếu ngoài giờ học — để vẽ
@@ -14,17 +15,34 @@ export function WeekGrid({
   const nowPeriod = currentPeriodIndex(new Date(), times)
   return (
     <>
+      {/* Trạng thái trống: lưới không có buổi nào thì hiện hướng dẫn + nút
+          làm luôn, thay vì một lưới trắng trơn. */}
+      {sessions.length === 0 && (
+        <div className="card mt-5 hidden p-5 text-center md:block">
+          <p className="font-bold text-foreground">Chưa có buổi học nào trong học kỳ này.</p>
+          <p className="mt-1 text-sm text-muted">Thêm buổi đầu tiên, hoặc khôi phục lại lịch gốc từ ảnh / Excel của Lộc.</p>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            {onAddFirst && <button onClick={onAddFirst} className="btn-primary px-4 py-2 text-sm">+ Thêm buổi đầu tiên</button>}
+            {onRestoreSeed && <button onClick={onRestoreSeed} className="btn-ghost px-4 py-2 text-sm">Khôi phục lịch gốc</button>}
+          </div>
+        </div>
+      )}
       {/* Lưới tuần — desktop */}
       <div className="card timetable-scroll mt-5 hidden p-3 md:block">
         <div
-          className="grid min-w-[920px]"
+          className="grid min-w-[1024px]"
           style={{ gridTemplateColumns: '76px repeat(7, minmax(0, 1fr))', gridTemplateRows: '42px repeat(16, 56px)' }}
         >
           <div className="flex items-center justify-center border-b border-border text-xs font-bold text-muted">Ca / Tiết</div>
+          {/* Tiêu đề ngày: MỘT hàng duy nhất (flex-row + whitespace-nowrap).
+              Trước đây là flex-col nên huy hiệu "Hôm nay" rớt xuống dòng
+              thứ hai dưới tên ngày — đúng thứ Lộc thấy ở cột Chủ nhật vào
+              ngày Chủ nhật. Cột rộng tối thiểu 1024px (≈135px/cột) để tên
+              ngày + huy hiệu nằm vừa một hàng. */}
           {DAY_NAMES.map((d, i) => (
-            <div key={d} className={`flex flex-col items-center justify-center border-b border-border text-sm font-bold ${i === today ? 'text-primary' : 'text-foreground'}`}>
-              <span>{d}</span>
-              {i === today && <span className="mt-0.5 rounded-full bg-primary px-2 py-px text-[10px] font-bold text-white">Hôm nay</span>}
+            <div key={d} className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap border-b border-border text-xs font-bold lg:text-sm ${i === today ? 'text-primary' : 'text-foreground'}`}>
+              <span className="whitespace-nowrap">{d}</span>
+              {i === today && <span className="shrink-0 rounded-full bg-primary px-2 py-px text-[10px] font-bold text-white">Hôm nay</span>}
             </div>
           ))}
           {PERIOD_TIMES.map((t, p) => (
@@ -81,7 +99,10 @@ export function WeekGrid({
         </div>
         <div className="mt-3 space-y-2">
           {daySessions(mobileDay).filter((s) => filteredIds.has(s.id)).length === 0 && (
-            <p className="card p-4 text-sm text-muted">Không có buổi nào trong ngày này (theo bộ lọc hiện tại).</p>
+            <div className="card p-4">
+              <p className="text-sm text-muted">Không có buổi nào trong ngày này (theo bộ lọc hiện tại).</p>
+              <button onClick={() => onEmptyCell(mobileDay, 1)} className="btn-primary mt-3 px-4 py-2 text-sm">+ Thêm buổi cho ngày này</button>
+            </div>
           )}
           {daySessions(mobileDay).filter((s) => filteredIds.has(s.id)).map((s) => {
             const c = colorFor(s.subject, dark)

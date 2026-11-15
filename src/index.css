@@ -90,59 +90,67 @@ select:disabled {
   }
 }
 
-/* Nút chính / nút phụ dùng chung — một màu nhấn duy nhất. */
-.btn-primary {
-  border-radius: 0.75rem;
-  background: var(--primary);
-  color: #fff;
-  font-weight: 700;
-  transition: background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
-}
-.btn-primary:hover {
-  background: var(--primary-hover);
-}
-.btn-ghost {
-  border-radius: 0.75rem;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--foreground);
-  font-weight: 600;
-  transition: background-color 150ms ease, transform 150ms ease;
-}
-.btn-ghost:hover {
-  background: color-mix(in srgb, var(--surface) 88%, var(--foreground) 12%);
-}
+/* Nút chính / nút phụ / thẻ / ô nhập dùng chung — một màu nhấn duy nhất.
+ * Đặt trong @layer components (Part 7): trước đây các class này viết trần
+ * (không layer) nên thắng mọi utility của Tailwind — ví dụ `.input`
+ * (padding 0.5rem 0.75rem) đã nuốt mất `pl-9 pr-10` của ô tìm kiếm ở
+ * header, khiến icon kính lúp đè lên placeholder. Trong layer
+ * components, utility (layer utilities, đứng sau) mới thắng đúng như ý. */
+@layer components {
+  .btn-primary {
+    border-radius: 0.75rem;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    transition: background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+  }
+  .btn-primary:hover {
+    background: var(--primary-hover);
+  }
+  .btn-ghost {
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--foreground);
+    font-weight: 600;
+    transition: background-color 150ms ease, transform 150ms ease;
+  }
+  .btn-ghost:hover {
+    background: color-mix(in srgb, var(--surface) 88%, var(--foreground) 12%);
+  }
 
-/* Thẻ bề mặt chuẩn của hệ thống: nền token + viền token + bóng mềm. */
-.card {
-  border-radius: 1rem;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
+  /* Thẻ bề mặt chuẩn của hệ thống: nền token + viền token + bóng mềm. */
+  .card {
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
 
-.input {
-  width: 100%;
-  border-radius: 0.75rem;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  outline: none;
-  color: var(--foreground);
-  cursor: text;
-}
-.input:focus {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 25%, transparent);
-}
-.input::placeholder {
-  color: var(--muted);
-}
-/* Option trong select ở dark mode: nền tối để không bị chữ đen trên nền trắng hệ thống. */
-.dark .input option {
-  background: var(--surface);
-  color: var(--foreground);
+  .input {
+    width: 100%;
+    min-width: 0;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    color: var(--foreground);
+    cursor: text;
+  }
+  .input:focus {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 25%, transparent);
+  }
+  .input::placeholder {
+    color: var(--muted);
+  }
+  /* Option trong select ở dark mode: nền tối để không bị chữ đen trên nền trắng hệ thống. */
+  .dark .input option {
+    background: var(--surface);
+    color: var(--foreground);
+  }
 }
 
 /* Lưới lịch: cuộn ngang trên màn hình hẹp thay vì vỡ layout */

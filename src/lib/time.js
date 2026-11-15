@@ -130,6 +130,22 @@ export function nextOccurrence(session, from = new Date(), times = PERIOD_TIMES)
   return next
 }
 
+/**
+ * Buổi học sắp tới gần nhất (kể từ `from`), tính trên toàn bộ lịch:
+ * so sánh lần học tiếp theo của từng buổi rồi lấy sớm nhất.
+ * Trả về { session, date } hoặc null khi không có buổi nào.
+ * Dùng cho widget "Hôm nay học gì" khi hôm nay trống — thay vì để
+ * trống trơn, app chỉ luôn buổi tiếp theo để Lộc khỏi phải mò.
+ */
+export function nextUpcomingSession(sessions, from = new Date(), times = PERIOD_TIMES) {
+  let best = null
+  for (const s of sessions || []) {
+    const date = nextOccurrence(s, from, times)
+    if (!best || date < best.date) best = { session: s, date }
+  }
+  return best
+}
+
 /** Giờ kết thúc của một buổi vào ngày `date` (cùng ngày với lần học đó). */
 export function sessionEndDate(session, date, times = PERIOD_TIMES) {
   const endMin = periodEndMinutes(session.end, times)
